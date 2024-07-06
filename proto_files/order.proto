@@ -1,0 +1,52 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "com.store.order.proto";
+option java_outer_classname = "OrderProto";
+
+package com.store;
+
+service OrderService {
+  rpc SearchOrders(OrderSearchRequest) returns (OrderListResponse);
+  rpc GetOrder(OrderId) returns (Order);
+  rpc AddOrder(NewOrder) returns (OrderId);
+  rpc UpdateOrder(Order) returns (OrderResponse);
+  rpc DeleteOrder(OrderId) returns (OrderResponse);
+}
+
+enum OrderStatus {
+  NULL_ORD_STATUS = 0;
+  FULFILLED = 1;
+  PENDING = 2;
+  CANCELLED = 3;
+}
+
+message Order {
+  int32 id = 1;
+  int32 productId = 2;
+  int32 count = 3;
+  OrderStatus status = 4;
+}
+
+message NewOrder {
+  int32 productId = 1;
+  int32 count = 2;
+  OrderStatus status = 3;
+}
+
+message OrderId {
+  int32 id = 1;
+}
+
+message OrderSearchRequest {
+  int32 productId = 1;
+  OrderStatus status = 2;
+}
+
+message OrderListResponse {
+  repeated Order orders = 1;
+}
+
+message OrderResponse {
+  string message = 1;
+}

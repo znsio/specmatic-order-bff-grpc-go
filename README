@@ -1,0 +1,7 @@
+```
+brew install go
+brew install protobuf
+brew install protoc
+brew install bufbuild/buf/buf
+brew install protoc-gen-go-grpc
+```
