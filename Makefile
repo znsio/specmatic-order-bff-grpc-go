@@ -1,7 +1,7 @@
 PROTO_DIR := ./proto_files
 GO_OUT_DIR := ./pkg/api
 CMD_DIR := ./cmd
-BFF_SERVICE_BINARY := bff_service
+BFF_SERVICE_BINARY := specmatic-order-bff-grpc-go
 
 .PHONY: all proto build clean
 

@@ -1,5 +1,5 @@
 version: v1beta1
-name: buf.build/harikrishnan83/specmatic-order-bff-grpc-go
+name: buf.build/znsio/specmatic-order-bff-grpc-go
 deps:
   - buf.build/googleapis/googleapis
   - buf.build/envoyproxy/protoc-gen-validate
