@@ -1,8 +1,8 @@
 sources:
   - provider: filesystem
     test:
-      - proto_files/bff.proto
+      - proto_files/in/specmatic/examples/store/order_bff_grpc/bff.proto
     stub:
-      - proto_files/order.proto
-      - proto_files/product.proto
+      - proto_files/in/specmatic/examples/store/order_api_grpc/order.proto
+      - proto_files/in/specmatic/examples/store/order_api_grpc/product.proto
 
