@@ -1,3 +1,20 @@
+## Steps to run the project
+
+```
+make clean
+make all
+./specmatic-order-bff-grpc-go
+```
+
+## Debugging steps
+
+In case of pb files already exists,
+```
+rm -rf ~/Library/Caches/buf
+```
+
+## Dev notes - Ignore
+
 ```
 brew install go
 brew install protobuf
@@ -6,11 +23,4 @@ brew install bufbuild/buf/buf
 brew install protoc-gen-go-grpc
 go mod tidy
 buf dep update
-```
-
-
-
-in case of pb files already exists, 
-```
-rm -rf ~/Library/Caches/buf
 ```
