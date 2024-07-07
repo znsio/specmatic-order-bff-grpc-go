@@ -33,40 +33,13 @@ func (s *DomainAPIService) CreateOrder(ctx context.Context, newOrder *bff_pb.New
 	return &bff_pb.OrderId{Id: orderId.Id}, nil
 }
 
-type ProductType int32
-
-const (
-	ProductType_UNKNOWN     ProductType = 0
-	ProductType_FOOD        ProductType = 1
-	ProductType_ELECTRONICS ProductType = 2
-)
-
-type Product struct {
-	Id        int32
-	Name      string
-	Type      ProductType
-	Inventory int32
-}
-
-type DomainResp struct {
-	Products []Product
-}
-
 func (s *DomainAPIService) FindProducts(ctx context.Context, req *bff_pb.FindAvailableProductsRequest) (*bff_pb.ProductListResponse, error) {
-	// domainReq := &domain_pb.ProductSearchRequest{
-	// 	Type: domain_pb.ProductType(req.Type),
-	// }
-	// domainResp, err := s.productServiceClient.SearchProducts(ctx, domainReq)
-	// if err != nil {
-	// 	return nil, err
-	// }
-
-	domainResp := DomainResp{
-		Products: []Product{
-			{Id: 1, Name: "Product 1", Type: 2, Inventory: 100},
-			{Id: 2, Name: "Product 2", Type: 1, Inventory: 200},
-			{Id: 3, Name: "Product 3", Type: 2, Inventory: 50},
-		},
+	domainReq := &domain_pb.ProductSearchRequest{
+		Type: domain_pb.ProductType(req.Type),
+	}
+	domainResp, err := s.productServiceClient.SearchProducts(ctx, domainReq)
+	if err != nil {
+		return nil, err
 	}
 
 	products := make([]*bff_pb.Product, len(domainResp.Products))
