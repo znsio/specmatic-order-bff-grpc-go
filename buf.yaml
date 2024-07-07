@@ -1,0 +1,5 @@
+version: v1beta1
+name: buf.build/harikrishnan83/your_project
+deps:
+  - buf.build/googleapis/googleapis
+  - buf.build/envoyproxy/protoc-gen-validate

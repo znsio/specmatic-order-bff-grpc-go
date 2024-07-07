@@ -1,0 +1,53 @@
+syntax = "proto3";
+
+option go_package = "specmatic-order-bff-grpc-go/pkg/api/proto_files";
+option java_multiple_files = true;
+option java_package = "com.store.product.proto";
+option java_outer_classname = "ProductProto";
+
+package com.store;
+
+service ProductService {
+  rpc SearchProducts(ProductSearchRequest) returns (ProductListResponse);
+  rpc GetProduct(ProductId) returns (Product);
+  rpc AddProduct(NewProduct) returns (ProductId);
+  rpc UpdateProduct(Product) returns (ProductResponse);
+  rpc DeleteProduct(ProductId) returns (ProductResponse);
+}
+
+enum ProductType {
+  NULL_PROD_TYPE = 0;
+  BOOK = 1;
+  FOOD = 2;
+  GADGET = 3;
+  OTHER = 4;
+}
+
+message Product {
+  int32 id = 1;
+  string name = 2;
+  ProductType type = 3;
+  int32 inventory = 4;
+}
+
+message NewProduct {
+  string name = 1;
+  ProductType type = 2;
+  int32 inventory = 3;
+}
+
+message ProductId {
+  int32 id = 1;
+}
+
+message ProductSearchRequest {
+  ProductType type = 1;
+}
+
+message ProductListResponse {
+  repeated Product products = 1;
+}
+
+message ProductResponse {
+  string message = 1;
+}
