@@ -1,8 +1,7 @@
 version: v1beta1
 name: buf.build/znsio/specmatic-order-bff-grpc-go
 deps:
-  - buf.build/googleapis/googleapis
-  - buf.build/envoyproxy/protoc-gen-validate
+  - buf.build/bufbuild/protovalidate
 build:
   roots:
     - proto_files
