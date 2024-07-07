@@ -1,4 +1,4 @@
-## Steps to run the project
+## Seps to run the project
 
 ```
 make clean
@@ -24,3 +24,14 @@ brew install protoc-gen-go-grpc
 go mod tidy
 buf dep update
 ```
+
+## TODO
+
+- [ ] Generative Tests
+- [ ] Git submodule for proto
+- [ ] Externalising GoPackage name to buf.gen.yaml
+- [ ] Architecture diagram
+- [ ] Dockerize the project
+- [ ] Test Containers
+- [ ] Fix buf validate proto file dependency in specmatic-grpc
+- [ ] Kafka
