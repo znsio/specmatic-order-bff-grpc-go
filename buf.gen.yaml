@@ -2,18 +2,15 @@ version: v1
 plugins:
   - name: go
     out: pkg/api
-    opt: 
-      - module=specmatic-order-bff-grpc-go/pkg/api
+    opt:
+      - paths=source_relative
   - name: go-grpc
     out: pkg/api
-    opt: 
+    opt:
+      - paths=source_relative
       - require_unimplemented_servers=false
-      - module=specmatic-order-bff-grpc-go/pkg/api
   - name: validate
     out: pkg/api
     opt:
       - lang=go
       - paths=source_relative
-
-
-

@@ -5,7 +5,7 @@ go 1.22
 require (
 	github.com/envoyproxy/protoc-gen-validate v1.0.4
 	google.golang.org/grpc v1.56.0
-	google.golang.org/protobuf v1.32.0
+	google.golang.org/protobuf v1.34.2
 )
 
 require (
@@ -14,6 +14,7 @@ require (
 )
 
 require (
+	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.34.2-20240508200655-46a4cf4ba109.2 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/iancoleman/strcase v0.3.0 // indirect
 	golang.org/x/mod v0.12.0 // indirect

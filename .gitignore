@@ -9,6 +9,9 @@
 Gopkg.lock
 go.sum
 
+# buf generarted files
+pkg/api
+
 # IDE and editor files
 .idea/
 *.swp

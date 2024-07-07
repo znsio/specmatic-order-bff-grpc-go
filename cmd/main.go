@@ -8,7 +8,7 @@ import (
 	"specmatic-order-bff-grpc-go/internal/handlers"
 	"specmatic-order-bff-grpc-go/internal/services"
 
-	bff_pb "specmatic-order-bff-grpc-go/pkg/api/bff"
+	bff_pb "specmatic-order-bff-grpc-go/pkg/api/in/specmatic/examples/store/order_bff_grpc"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"

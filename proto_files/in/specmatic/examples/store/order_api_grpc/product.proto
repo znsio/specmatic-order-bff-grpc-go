@@ -1,11 +1,12 @@
 syntax = "proto3";
 
-option go_package = "specmatic-order-bff-grpc-go/pkg/api";
 option java_multiple_files = true;
 option java_package = "com.store.product.proto";
+option go_package = "github.com/znsio/specmatic-order-bff-grpc-go/com/store/product/proto";
 option java_outer_classname = "ProductProto";
 
 package com.store;
+import "buf/validate/validate.proto";
 
 service ProductService {
   rpc SearchProducts(ProductSearchRequest) returns (ProductListResponse);
@@ -24,24 +25,24 @@ enum ProductType {
 }
 
 message Product {
-  int32 id = 1;
-  string name = 2;
-  ProductType type = 3;
-  int32 inventory = 4;
+  int32 id = 1 [(buf.validate.field).required = true];
+  string name = 2 [(buf.validate.field).required = true];
+  ProductType type = 3 [(buf.validate.field).required = true];
+  int32 inventory = 4 [(buf.validate.field).required = true];
 }
 
 message NewProduct {
-  string name = 1;
-  ProductType type = 2;
-  int32 inventory = 3;
+  string name = 1 [(buf.validate.field).required = true];
+  ProductType type = 2 [(buf.validate.field).required = true];
+  int32 inventory = 3 [(buf.validate.field).required = false];
 }
 
 message ProductId {
-  int32 id = 1;
+  int32 id = 1 [(buf.validate.field).required = true];
 }
 
 message ProductSearchRequest {
-  ProductType type = 1;
+  ProductType type = 1 [(buf.validate.field).enum.defined_only = true];
 }
 
 message ProductListResponse {
