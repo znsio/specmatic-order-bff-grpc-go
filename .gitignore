@@ -12,6 +12,9 @@ go.sum
 # buf generarted files
 pkg/api
 
+# application binary
+specmatic-order-bff-grpc-go
+
 # IDE and editor files
 .idea/
 *.swp
