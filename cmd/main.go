@@ -1,43 +1,47 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net"
 
+	"specmatic-order-bff-grpc-go/internal/handlers"
+	"specmatic-order-bff-grpc-go/internal/services"
 	pb "specmatic-order-bff-grpc-go/pkg/api/proto_files"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 )
 
-// Your service implementations
-type orderServer struct {
-	pb.UnimplementedOrderServiceServer
-	// Add any fields you need
-}
-
-type productServer struct {
-	pb.UnimplementedProductServiceServer
-	// Add any fields you need
-}
-
 func main() {
 	lis, err := net.Listen("tcp", ":50051")
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
-	s := grpc.NewServer()
 
-	// Register your services
-	pb.RegisterOrderServiceServer(s, &orderServer{})
-	pb.RegisterProductServiceServer(s, &productServer{})
+	// Set up connections to domain services
+	orderConn, err := grpc.Dial("order-service-address:port", grpc.WithInsecure())
+	if err != nil {
+		log.Fatalf("failed to connect to order service: %v", err)
+	}
+	defer orderConn.Close()
 
-	// Register reflection service on gRPC server.
-	reflection.Register(s)
+	productConn, err := grpc.Dial("product-service-address:port", grpc.WithInsecure())
+	if err != nil {
+		log.Fatalf("failed to connect to product service: %v", err)
+	}
+	defer productConn.Close()
 
-	fmt.Println("Server is running on :50051")
-	if err := s.Serve(lis); err != nil {
+	domainAPIService := services.NewDomainAPIService(orderConn, productConn)
+
+	grpcServer := grpc.NewServer()
+
+	orderHandler := handlers.NewOrderHandler(domainAPIService)
+	pb.RegisterOrderServiceServer(grpcServer, orderHandler)
+
+	reflection.Register(grpcServer)
+
+	log.Println("Starting gRPC server on :50051")
+	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}
 }

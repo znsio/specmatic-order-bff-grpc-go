@@ -9,10 +9,13 @@ require (
 )
 
 require (
-	github.com/golang/protobuf v1.5.3 // indirect
-	github.com/iancoleman/strcase v0.3.0 // indirect
 	github.com/lyft/protoc-gen-star/v2 v2.0.3 // indirect
 	github.com/spf13/afero v1.10.0 // indirect
+)
+
+require (
+	github.com/golang/protobuf v1.5.3 // indirect
+	github.com/iancoleman/strcase v0.3.0 // indirect
 	golang.org/x/mod v0.12.0 // indirect
 	golang.org/x/net v0.20.0 // indirect
 	golang.org/x/sys v0.16.0 // indirect

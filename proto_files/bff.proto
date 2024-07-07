@@ -1,0 +1,62 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "com.store.order.bff.proto";
+option java_outer_classname = "BffProto";
+option go_package = "specmatic-order-bff-grpc-go/pkg/api/proto_files";
+
+package com.store.order.bff;
+import "validate/validate.proto";
+
+service OrderService {
+  rpc findAvailableProducts(findAvailableProductsRequest) returns (ProductListResponse);
+  rpc createOrder(NewOrder) returns (OrderId);
+  rpc createProduct(NewProduct) returns (ProductId);
+}
+
+enum ProductType {
+  NULL_PROD_TYPE = 0;
+  BOOK = 1;
+  FOOD = 2;
+  GADGET = 3;
+  OTHER = 4;
+}
+
+message findAvailableProductsRequest {
+  ProductType type = 1 [(validate.rules).enum.defined_only = true];
+  int32  pageSize = 2 [(validate.rules).int32.gt = 0];
+}
+
+message Product {
+  int32 id = 1 [(validate.rules).int32.gt = 0];
+  string name = 2 [(validate.rules).string.min_len = 1];
+  ProductType type = 3 [(validate.rules).enum.defined_only = true];
+  int32 inventory = 4 [(validate.rules).int32.gte = 0];
+}
+
+message ProductListResponse {
+  repeated Product products = 1;
+}
+
+message NewOrder {
+  int32 productId = 1 [(validate.rules).int32.gt = 0];
+  int32 count = 2 [(validate.rules).int32 = {gte: 2, lte: 100}];
+}
+
+message OrderId {
+  int32 id = 1 [(validate.rules).int32.gt = 0];
+}
+
+message NewProduct {
+  string name = 1 [(validate.rules).string = {
+    min_len: 5,
+    max_len: 10,
+    pattern: "^[A-Z]{5,10}$"
+  }];
+  ProductType type = 2 [(validate.rules).enum.defined_only = true];
+  int32 inventory = 3 [(validate.rules).int32.gte = 0];
+}
+
+message ProductId {
+  int32 id = 1 [(validate.rules).int32.gt = 0];
+}
