@@ -1,9 +1,9 @@
 syntax = "proto3";
 
+option go_package = "specmatic-order-bff-grpc-go/pkg/api/bff";
 option java_multiple_files = true;
 option java_package = "com.store.order.bff.proto";
 option java_outer_classname = "BffProto";
-option go_package = "specmatic-order-bff-grpc-go/pkg/api/proto_files";
 
 package com.store.order.bff;
 import "validate/validate.proto";
@@ -24,7 +24,7 @@ enum ProductType {
 
 message findAvailableProductsRequest {
   ProductType type = 1 [(validate.rules).enum.defined_only = true];
-  int32  pageSize = 2 [(validate.rules).int32.gt = 0];
+  int32 pageSize = 2 [(validate.rules).int32.gt = 0];
 }
 
 message Product {

@@ -1,47 +1,62 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net"
 
 	"specmatic-order-bff-grpc-go/internal/handlers"
 	"specmatic-order-bff-grpc-go/internal/services"
-	pb "specmatic-order-bff-grpc-go/pkg/api/proto_files"
+
+	bff_pb "specmatic-order-bff-grpc-go/pkg/api/bff"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 )
 
-func main() {
-	lis, err := net.Listen("tcp", ":50051")
+func connectToService(address string) (*grpc.ClientConn, error) {
+	conn, err := grpc.Dial(address, grpc.WithInsecure())
 	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
+		return nil, fmt.Errorf("failed to connect to service at %s: %v", address, err)
 	}
+	return conn, nil
+}
 
-	// Set up connections to domain services
-	orderConn, err := grpc.Dial("order-service-address:port", grpc.WithInsecure())
+func main() {
+	// Service addresses can be loaded from configuration (e.g., YAML or environment variables)
+	orderServiceAddress := "order-service-address:port"
+	productServiceAddress := "product-service-address:port"
+
+	// Connect to domain services
+	orderConn, err := connectToService(orderServiceAddress)
 	if err != nil {
-		log.Fatalf("failed to connect to order service: %v", err)
+		log.Fatal(err)
 	}
 	defer orderConn.Close()
 
-	productConn, err := grpc.Dial("product-service-address:port", grpc.WithInsecure())
+	productConn, err := connectToService(productServiceAddress)
 	if err != nil {
-		log.Fatalf("failed to connect to product service: %v", err)
+		log.Fatal(err)
 	}
 	defer productConn.Close()
 
+	// Setup BFF gRPC server
 	domainAPIService := services.NewDomainAPIService(orderConn, productConn)
 
 	grpcServer := grpc.NewServer()
 
-	orderHandler := handlers.NewOrderHandler(domainAPIService)
-	pb.RegisterOrderServiceServer(grpcServer, orderHandler)
+	bffHandler := handlers.NewBffHandler(domainAPIService)
+	bff_pb.RegisterOrderServiceServer(grpcServer, bffHandler)
 
 	reflection.Register(grpcServer)
 
+	lis, err := net.Listen("tcp", ":50051")
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	log.Println("Starting gRPC server on :50051")
 	if err := grpcServer.Serve(lis); err != nil {
-		log.Fatalf("failed to serve: %v", err)
+		log.Fatal(err)
 	}
 }

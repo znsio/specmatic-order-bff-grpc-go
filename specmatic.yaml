@@ -1,0 +1,8 @@
+sources:
+  - provider: filesystem
+    test:
+      - proto_files/bff.proto
+    stub:
+      - proto_files/order.proto
+      - proto_files/product.proto
+
