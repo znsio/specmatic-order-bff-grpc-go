@@ -2,9 +2,9 @@
 // versions:
 // - protoc-gen-go-grpc v1.4.0
 // - protoc             (unknown)
-// source: proto_files/product.proto
+// source: product.proto
 
-package proto_files
+package api
 
 import (
 	context "context"
@@ -256,5 +256,5 @@ var ProductService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "proto_files/product.proto",
+	Metadata: "product.proto",
 }

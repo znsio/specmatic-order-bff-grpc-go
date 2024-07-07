@@ -2,9 +2,9 @@
 // versions:
 // - protoc-gen-go-grpc v1.4.0
 // - protoc             (unknown)
-// source: proto_files/bff.proto
+// source: bff.proto
 
-package proto_files
+package bff
 
 import (
 	context "context"
@@ -180,5 +180,5 @@ var OrderService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "proto_files/bff.proto",
+	Metadata: "bff.proto",
 }

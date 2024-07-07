@@ -1,5 +1,9 @@
 version: v1beta1
-name: buf.build/harikrishnan83/your_project
+name: buf.build/harikrishnan83/specmatic-order-bff-grpc-go
 deps:
   - buf.build/googleapis/googleapis
   - buf.build/envoyproxy/protoc-gen-validate
+build:
+  roots:
+    - proto_files
+
