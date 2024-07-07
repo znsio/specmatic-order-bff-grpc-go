@@ -24,3 +24,6 @@ specmatic-order-bff-grpc-go
 
 # OS files
 .DS_Store
+
+order.pb
+product.pb

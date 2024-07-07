@@ -24,8 +24,8 @@ func connectToService(address string) (*grpc.ClientConn, error) {
 
 func main() {
 	// Service addresses can be loaded from configuration (e.g., YAML or environment variables)
-	orderServiceAddress := "order-service-address:port"
-	productServiceAddress := "product-service-address:port"
+	orderServiceAddress := "localhost:9000"
+	productServiceAddress := "localhost:9000"
 
 	// Connect to domain services
 	orderConn, err := connectToService(orderServiceAddress)
