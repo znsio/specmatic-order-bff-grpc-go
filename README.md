@@ -1,3 +1,7 @@
+## Architecture
+
+![Specmatic gRPC Support Architecture](/assets/SpecmaticGRPCSupport.gif)
+
 ## Setup
 
 ### Cloning with submodules
