@@ -42,13 +42,7 @@
    make all
    ./specmatic-order-bff-grpc-go
    ```
-   OR 
-
-   to auto start the server
-
-   ```
-   reflex -c .reflex.conf      
-   ```
+   
 
 ## Running Contract Tests
 
