@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"fmt"
 	domain_pb "specmatic-order-bff-grpc-go/pkg/api/in/specmatic/examples/store/order_api_grpc"
 	bff_pb "specmatic-order-bff-grpc-go/pkg/api/in/specmatic/examples/store/order_bff_grpc"
 
@@ -37,8 +38,10 @@ func (s *DomainAPIService) FindProducts(ctx context.Context, req *bff_pb.FindAva
 	domainReq := &domain_pb.ProductSearchRequest{
 		Type: domain_pb.ProductType(req.Type),
 	}
+	fmt.Println("reached in service")
 	domainResp, err := s.productServiceClient.SearchProducts(ctx, domainReq)
 	if err != nil {
+		fmt.Println("error is : ", err)
 		return nil, err
 	}
 
