@@ -4,6 +4,7 @@ go 1.22
 
 require (
 	github.com/bufbuild/buf v1.34.0
+	github.com/bufbuild/protovalidate-go v0.6.2
 	google.golang.org/grpc v1.65.0
 )
 
@@ -18,7 +19,6 @@ require (
 	github.com/antlr4-go/antlr/v4 v4.13.0 // indirect
 	github.com/bufbuild/protocompile v0.14.0 // indirect
 	github.com/bufbuild/protoplugin v0.0.0-20240323223605-e2735f6c31ee // indirect
-	github.com/bufbuild/protovalidate-go v0.6.2 // indirect
 	github.com/bufbuild/protoyaml-go v0.1.9 // indirect
 	github.com/containerd/stargz-snapshotter/estargz v0.15.1 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.4 // indirect
