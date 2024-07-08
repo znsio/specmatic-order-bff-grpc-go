@@ -37,9 +37,9 @@ func (h *BffHandler) CreateProduct(ctx context.Context, req *bff_pb.NewProduct) 
 }
 
 func (h *BffHandler) CreateOrder(ctx context.Context, req *bff_pb.NewOrder) (*bff_pb.OrderId, error) {
-	if err := utils.ValidateReq(req); err != nil {
-		log.Printf("Create Order validation error: %v \n \n", err)
-		return nil, err
-	}
+	// if err := utils.ValidateReq(req); err != nil {
+	// 	log.Printf("Create Order validation error: %v \n \n", err)
+	// 	return nil, err
+	// }
 	return h.domainAPIService.CreateOrder(ctx, req)
 }
