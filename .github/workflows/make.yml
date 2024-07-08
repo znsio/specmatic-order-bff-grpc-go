@@ -8,22 +8,24 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+      
+    runs-on: ${{matrix.os}}
 
     steps:
-      - name: Checkout code
+      - name: Check out code
         uses: actions/checkout@v4
 
-      - name: Use Go cache
-        uses: actions/cache@v3
-        with:
-          path: ${{ github.workspace }}/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.mod') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
-
+      - name: Set up Go
+        uses: actions/setup-go@v4
+      
+      - name: Go Tidy
+        run: go mod tidy
+      
       - name: Install dependencies
         run: go mod download
-
+      
       - name: Build with Makefile
         run: make all
