@@ -1,7 +1,7 @@
 ## Seps to run the project
 
 ```
-go mod tidy
+go mod download
 make clean
 make all
 ./specmatic-order-bff-grpc-go
