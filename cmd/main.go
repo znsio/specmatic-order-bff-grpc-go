@@ -5,8 +5,8 @@ import (
 	"log"
 	"net"
 
-	"specmatic-order-bff-grpc-go/internal/handlers"
-	"specmatic-order-bff-grpc-go/internal/services"
+	"specmatic-order-bff-grpc-go/internal/com/store/order/bff/handlers"
+	"specmatic-order-bff-grpc-go/internal/com/store/order/bff/services"
 
 	bff_pb "specmatic-order-bff-grpc-go/pkg/api/in/specmatic/examples/store/order_bff_grpc"
 
