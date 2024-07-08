@@ -1,0 +1,29 @@
+name: Build GoLang Project
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Use Go cache
+        uses: actions/cache@v3
+        with:
+          path: ${{ github.workspace }}/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.mod') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Install dependencies
+        run: go mod download
+
+      - name: Build with Makefile
+        run: make all
