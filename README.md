@@ -63,28 +63,17 @@ In case of pb files already exists,
 rm -rf ~/Library/Caches/buf
 ```
 
-## Dev notes - Ignore
-
-```
-brew install go
-brew install protobuf
-brew install protoc
-brew install bufbuild/buf/buf
-brew install protoc-gen-go-grpc
-go mod tidy
-buf dep update
-```
-
 ## TODO
 
 - [ ] Generative Tests
   - [x] Update specmatic-grpc to run all tests even when there are failures
   - [x] Add validations
   - [x] Leverage protovalidate?
-- [ ] Git submodule for proto
+  - [ ] Meaningful error messages
+- [x] Git submodule for proto
 - [ ] Externalising GoPackage name to buf.gen.yaml
-- [ ] Architecture diagram
-- [ ] Run everything in Github CI
+- [x] Architecture diagram
+- [x] Run everything in Github CI
 - [ ] Dockerize the project
 - [ ] Test Containers
 - [ ] Fix buf validate proto file dependency in specmatic-grpc

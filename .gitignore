@@ -15,6 +15,9 @@ pkg/api
 # application binary
 specmatic-order-bff-grpc-go
 
+# Specmatic
+.specmatic
+
 # IDE and editor files
 .idea/
 *.swp
