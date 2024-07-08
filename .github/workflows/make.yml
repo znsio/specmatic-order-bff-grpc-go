@@ -20,6 +20,8 @@ jobs:
 
       - name: Buf CLI
         uses: bufbuild/buf-setup-action@v1.34.0
+        with:
+          github_token: ${{ github.token }}
       - run: buf --version
 
       - name: Set up Go
