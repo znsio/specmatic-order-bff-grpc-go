@@ -20,25 +20,24 @@ func NewBffHandler(domainAPIService *services.DomainAPIService) *BffHandler {
 }
 
 func (h *BffHandler) FindAvailableProducts(ctx context.Context, req *bff_pb.FindAvailableProductsRequest) (*bff_pb.ProductListResponse, error) {
-	hasErrors, err := utils.ValidateReq(req)
-	if hasErrors {
+	err := utils.ValidateReq(req)
+	if err != nil {
 		return nil, err
 	}
 	return h.domainAPIService.FindProducts(ctx, req)
 }
 
 func (h *BffHandler) CreateProduct(ctx context.Context, req *bff_pb.NewProduct) (*bff_pb.ProductId, error) {
-	hasErrors, err := utils.ValidateReq(req)
-	if hasErrors {
+	err := utils.ValidateReq(req)
+	if err != nil {
 		return nil, err
 	}
-
 	return h.domainAPIService.CreateProduct(ctx, req)
 }
 
 func (h *BffHandler) CreateOrder(ctx context.Context, req *bff_pb.NewOrder) (*bff_pb.OrderId, error) {
-	hasErrors, err := utils.ValidateReq(req)
-	if hasErrors {
+	err := utils.ValidateReq(req)
+	if err != nil {
 		return nil, err
 	}
 	return h.domainAPIService.CreateOrder(ctx, req)

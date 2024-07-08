@@ -5,14 +5,14 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-func ValidateReq(req proto.Message) (bool, error) {
+func ValidateReq(req proto.Message) error {
 	validator, err := protovalidate.New()
 	if err != nil {
-		return true, err
+		return err
 	}
 	err = validator.Validate(req)
 	if err != nil {
-		return true, err
+		return err
 	}
-	return false, nil
+	return nil
 }
