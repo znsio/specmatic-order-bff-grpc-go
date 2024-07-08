@@ -56,19 +56,3 @@ In case of pb files already exists,
 ```
 rm -rf ~/Library/Caches/buf
 ```
-
-## TODO
-
-- [ ] Generative Tests
-  - [x] Update specmatic-grpc to run all tests even when there are failures
-  - [x] Add validations
-  - [x] Leverage protovalidate?
-  - [ ] Meaningful error messages
-- [x] Git submodule for proto
-- [ ] Externalising GoPackage name to buf.gen.yaml
-- [x] Architecture diagram
-- [x] Run everything in Github CI
-- [ ] Dockerize the project
-- [ ] Test Containers
-- [ ] Fix buf validate proto file dependency in specmatic-grpc
-- [ ] Kafka
