@@ -3,15 +3,16 @@ module specmatic-order-bff-grpc-go
 go 1.22
 
 require (
+	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.34.2-20240508200655-46a4cf4ba109.2
 	github.com/bufbuild/buf v1.34.0
 	github.com/bufbuild/protovalidate-go v0.6.2
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.20.0
 	google.golang.org/grpc v1.65.0
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.4.0
 	google.golang.org/protobuf v1.34.2
 )
 
 require (
-	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.34.2-20240508200655-46a4cf4ba109.2 // indirect
 	buf.build/gen/go/bufbuild/registry/connectrpc/go v1.16.2-20240610164129-660609bc46d3.1 // indirect
 	buf.build/gen/go/bufbuild/registry/protocolbuffers/go v1.34.2-20240610164129-660609bc46d3.2 // indirect
 	connectrpc.com/connect v1.16.2 // indirect
@@ -42,7 +43,6 @@ require (
 	github.com/google/go-containerregistry v0.19.2 // indirect
 	github.com/google/pprof v0.0.0-20240618054019-d3b898a103f8 // indirect
 	github.com/google/uuid v1.6.0 // indirect
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.20.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jdx/go-netrc v1.0.0 // indirect
 	github.com/klauspost/compress v1.17.9 // indirect
