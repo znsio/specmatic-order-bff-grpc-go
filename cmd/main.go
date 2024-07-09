@@ -1,12 +1,12 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net"
 
 	"specmatic-order-bff-grpc-go/internal/com/store/order/bff/handlers"
 	"specmatic-order-bff-grpc-go/internal/com/store/order/bff/services"
+	"specmatic-order-bff-grpc-go/internal/com/store/order/bff/utils"
 
 	bff_pb "specmatic-order-bff-grpc-go/pkg/api/in/specmatic/examples/store/order_bff_grpc"
 
@@ -14,27 +14,19 @@ import (
 	"google.golang.org/grpc/reflection"
 )
 
-func connectToService(address string) (*grpc.ClientConn, error) {
-	conn, err := grpc.Dial(address, grpc.WithInsecure())
-	if err != nil {
-		return nil, fmt.Errorf("failed to connect to service at %s: %v", address, err)
-	}
-	return conn, nil
-}
-
 func main() {
 	// Service addresses can be loaded from configuration (e.g., YAML or environment variables)
 	orderServiceAddress := "localhost:9000"
 	productServiceAddress := "localhost:9000"
 
 	// Connect to domain services
-	orderConn, err := connectToService(orderServiceAddress)
+	orderConn, err := utils.ConnectToService(orderServiceAddress)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer orderConn.Close()
 
-	productConn, err := connectToService(productServiceAddress)
+	productConn, err := utils.ConnectToService(productServiceAddress)
 	if err != nil {
 		log.Fatal(err)
 	}

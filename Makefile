@@ -15,7 +15,7 @@ proto:
 # Build the application
 build: proto
 	@echo "Building the application..."
-	@go build -o $(BFF_SERVICE_BINARY) $(CMD_DIR)/main.go
+	@go build -v -x -o $(BFF_SERVICE_BINARY) $(CMD_DIR)/main.go 
 
 # Clean up generated files and binaries
 clean:
