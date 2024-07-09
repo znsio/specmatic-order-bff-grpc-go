@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"testing"
 	"time"
 
@@ -33,7 +34,7 @@ func TestIntegration(t *testing.T) {
 	defer stubContainer.Terminate(ctx)
 
 	// Step 2: Start BFF container
-	printHeader(1, "Starting BFF app")
+	printHeader(2, "Starting BFF app")
 	bffContainer, bffPort, err := startBFFContainer(ctx, stubPort)
 	if err != nil {
 		t.Fatalf("Could not start BFF container: %s", err)
@@ -41,7 +42,7 @@ func TestIntegration(t *testing.T) {
 	defer bffContainer.Terminate(ctx)
 
 	// Step 3: Run test container
-	printHeader(1, "Starting tests")
+	printHeader(3, "Starting tests")
 	testLogs, err := runTestContainer(ctx, bffPort)
 	if err != nil {
 		t.Fatalf("Could not run test container: %s", err)
@@ -122,7 +123,8 @@ func startBFFContainer(ctx context.Context, stubPort string) (testcontainers.Con
 			"STUB_SERVER_PORT": stubPort,
 		},
 		ExposedPorts: []string{"8080/tcp"},
-		WaitingFor:   wait.ForListeningPort("8080/tcp"),
+		// WaitingFor:   wait.ForListeningPort("8080/tcp"),
+		WaitingFor: wait.ForLog("Starting gRPC server"),
 	}
 
 	fmt.Println("Container created")
@@ -149,11 +151,17 @@ func runTestContainer(ctx context.Context, bffPort string) (string, error) {
 		log.Fatalf("Error getting current directory: %v", err)
 	}
 
+	// Convert bffPort from string to int
+	bffPortInt, err := strconv.Atoi(bffPort)
+	if err != nil {
+		// t.Fatalf("Invalid port number: %s", err)
+	}
+
 	req := testcontainers.ContainerRequest{
 		Image: "znsio/specmatic-grpc-trial",
-		Cmd:   []string{"test", "--port=:" + bffPort},
+		Cmd:   []string{"test", fmt.Sprintf("--port=%d", bffPortInt)},
 		Mounts: testcontainers.Mounts(
-			testcontainers.BindMount(filepath.Join(pwd, "specmatic.yaml"), "/specmatic.yaml"),
+			testcontainers.BindMount(filepath.Join(pwd, "specmatic.yaml"), "/usr/src/app/specmatic.yaml"),
 		),
 		Env: map[string]string{
 			"BACKEND_PORT": bffPort,

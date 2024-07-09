@@ -1,29 +1,36 @@
-FROM golang:latest AS builder
+FROM golang:1.22-alpine AS builder
 
-RUN go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
-RUN go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
-RUN go install github.com/bufbuild/buf/cmd/buf@latest
+# Install necessary tools including make
+RUN apk add --no-cache make
+
+# Install necessary tools
+RUN go install google.golang.org/protobuf/cmd/protoc-gen-go@latest && \
+    go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest && \
+    go install github.com/bufbuild/buf/cmd/buf@latest
 
 # Set up the working directory
 WORKDIR /app
 
-# Copy the source code and Makefile
+# Copy go mod and sum files
 COPY . .
-
-# # Copy go mod and sum files
-# COPY go.mod go.sum ./
 
 # Download all dependencies
 RUN go mod tidy
 RUN go mod download
 
-# Copy the source code and Makefile
-COPY . .
+# # Copy the source code and Makefile
+# COPY cmd ./cmd
+# COPY internal ./internal
+# COPY pkg ./pkg
+# RUN ls 
+# COPY Makefile ./
 
+# Build the application
 RUN make all
 
 # # Final stage
-# FROM alpine:latest
+# FROM golang:1.22-alpine
+
 # RUN apk --no-cache add ca-certificates
 
 # WORKDIR /root/
