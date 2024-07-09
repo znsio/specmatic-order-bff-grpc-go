@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net"
+	"os"
 
 	"specmatic-order-bff-grpc-go/internal/com/store/order/bff/handlers"
 	"specmatic-order-bff-grpc-go/internal/com/store/order/bff/services"
@@ -15,9 +16,10 @@ import (
 )
 
 func main() {
+	domainServerPort := os.Getenv("DOMAIN_SERVER_PORT")
 	// Service addresses can be loaded from configuration (e.g., YAML or environment variables)
-	orderServiceAddress := "localhost:9000"
-	productServiceAddress := "localhost:9000"
+	orderServiceAddress := "host.docker.internal:" + domainServerPort
+	productServiceAddress := "host.docker.internal:" + domainServerPort
 
 	// Connect to domain services
 	orderConn, err := utils.ConnectToService(orderServiceAddress)
@@ -42,12 +44,12 @@ func main() {
 
 	reflection.Register(grpcServer)
 
-	lis, err := net.Listen("tcp", ":50051")
+	lis, err := net.Listen("tcp", ":8090")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	log.Println("Starting gRPC server on :50051")
+	log.Println("Starting gRPC server on :8090")
 	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatal(err)
 	}

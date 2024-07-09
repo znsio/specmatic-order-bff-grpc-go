@@ -120,9 +120,9 @@ func startBFFContainer(ctx context.Context, stubPort string) (testcontainers.Con
 	req := testcontainers.ContainerRequest{
 		Image: bffImageName,
 		Env: map[string]string{
-			"STUB_SERVER_PORT": stubPort,
+			"DOMAIN_SERVER_PORT": stubPort,
 		},
-		ExposedPorts: []string{"8080/tcp"},
+		ExposedPorts: []string{"8090/tcp"},
 		// WaitingFor:   wait.ForListeningPort("8080/tcp"),
 		WaitingFor: wait.ForLog("Starting gRPC server"),
 	}
@@ -137,7 +137,7 @@ func startBFFContainer(ctx context.Context, stubPort string) (testcontainers.Con
 		return nil, "", err
 	}
 
-	bffPort, err := bffContainer.MappedPort(ctx, "8080")
+	bffPort, err := bffContainer.MappedPort(ctx, "8090")
 	if err != nil {
 		return nil, "", err
 	}
@@ -159,13 +159,10 @@ func runTestContainer(ctx context.Context, bffPort string) (string, error) {
 
 	req := testcontainers.ContainerRequest{
 		Image: "znsio/specmatic-grpc-trial",
-		Cmd:   []string{"test", fmt.Sprintf("--port=%d", bffPortInt)},
+		Cmd:   []string{"test", fmt.Sprintf("--port=%d", bffPortInt), "--host=host.docker.internal"},
 		Mounts: testcontainers.Mounts(
 			testcontainers.BindMount(filepath.Join(pwd, "specmatic.yaml"), "/usr/src/app/specmatic.yaml"),
 		),
-		Env: map[string]string{
-			"BACKEND_PORT": bffPort,
-		},
 		WaitingFor: wait.ForLog("Tests completed"),
 		// WaitingFor:   wait.ForListeningPort("9000/tcp"),
 	}
