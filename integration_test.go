@@ -39,8 +39,7 @@ func TestIntegration(t *testing.T) {
 	runTests(t, env)
 
 	// TEAR DOWN
-	// defer teardown(t, env)
-	select {}
+	defer teardown(t, env)
 }
 
 func setup(t *testing.T) (*testEnvironment, error) {
@@ -201,7 +200,7 @@ func runTestContainer(env *testEnvironment) (string, error) {
 		Mounts: testcontainers.Mounts(
 			testcontainers.BindMount(filepath.Join(pwd, "specmatic.yaml"), "/usr/src/app/specmatic.yaml"),
 		),
-		WaitingFor: wait.ForLog("Tests completed"),
+		WaitingFor: wait.ForLog("Passed Tests: 25"),
 	}
 
 	testContainer, err := testcontainers.GenericContainer(env.ctx, testcontainers.GenericContainerRequest{
