@@ -2,7 +2,6 @@ package utils
 
 import (
 	"fmt"
-
 	"google.golang.org/grpc"
 )
 
