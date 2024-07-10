@@ -4,6 +4,7 @@ package config
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/spf13/viper"
 )
@@ -19,27 +20,33 @@ type Config struct {
 }
 
 func LoadConfig(configPath string) (*Config, error) {
-	viper.SetConfigFile(configPath)
-	viper.AutomaticEnv()
-
-	if err := viper.ReadInConfig(); err != nil {
-		return nil, fmt.Errorf("failed to read config file: %w", err)
-	}
-
 	var config Config
 
 	// Set default values
 	viper.SetDefault("backend.host", "localhost")
 	viper.SetDefault("backend.port", "9000")
-	viper.SetDefault("bff-server.port", "8090")
+	viper.SetDefault("bffserver.port", "8090")
 
-	// Map environment variables
-	viper.BindEnv("backend.host", "DOMAIN_SERVER_HOST")
-	viper.BindEnv("backend.port", "DOMAIN_SERVER_PORT")
-	viper.BindEnv("bff-server.port", "BFF_SERVER_PORT")
+	// Read the config file
+	viper.SetConfigFile(configPath)
+	if err := viper.ReadInConfig(); err != nil {
+		return nil, fmt.Errorf("failed to read config file: %w", err)
+	}
 
+	// Unmarshal the config file values
 	if err := viper.Unmarshal(&config); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal config: %w", err)
+	}
+
+	// Override with environment variables if they are set
+	if envHost := os.Getenv("DOMAIN_SERVER_HOST"); envHost != "" {
+		config.Backend.Host = envHost
+	}
+	if envPort := os.Getenv("DOMAIN_SERVER_PORT"); envPort != "" {
+		config.Backend.Port = envPort
+	}
+	if envBFFPort := os.Getenv("BFF_SERVER_PORT"); envBFFPort != "" {
+		config.BFFServer.Port = envBFFPort
 	}
 
 	return &config, nil

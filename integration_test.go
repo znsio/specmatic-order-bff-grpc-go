@@ -19,12 +19,12 @@ import (
 )
 
 type testEnvironment struct {
-	ctx               context.Context
-	domainServiceHost testcontainers.Container
-	domainServicePort string
-	bffServiceHost    testcontainers.Container
-	bffServicePort    string
-	config            *config.Config
+	ctx                      context.Context
+	domainServiceContainer   testcontainers.Container
+	domainServiceDyanmicPort string
+	bffServiceContainer      testcontainers.Container
+	bffServiceDyanmicPort    string
+	config                   *config.Config
 }
 
 func TestIntegration(t *testing.T) {
@@ -39,7 +39,8 @@ func TestIntegration(t *testing.T) {
 	runTests(t, env)
 
 	// TEAR DOWN
-	defer teardown(t, env)
+	// defer teardown(t, env)
+	select {}
 }
 
 func setup(t *testing.T) (*testEnvironment, error) {
@@ -57,13 +58,13 @@ func setup(t *testing.T) (*testEnvironment, error) {
 	env.config = cfg
 
 	printHeader(t, 1, "Starting Domain Service")
-	env.domainServiceHost, env.domainServicePort, err = startDomainService(env)
+	env.domainServiceContainer, env.domainServiceDyanmicPort, err = startDomainService(env)
 	if err != nil {
 		return nil, fmt.Errorf("could not start domain service container: %w", err)
 	}
 
 	printHeader(t, 2, "Starting BFF Service")
-	env.bffServiceHost, env.bffServicePort, err = startBFFService(t, env, env.domainServicePort)
+	env.bffServiceContainer, env.bffServiceDyanmicPort, err = startBFFService(t, env)
 	if err != nil {
 		return nil, fmt.Errorf("could not start bff service container: %w", err)
 	}
@@ -73,7 +74,7 @@ func setup(t *testing.T) (*testEnvironment, error) {
 
 func runTests(t *testing.T, env *testEnvironment) {
 	printHeader(t, 3, "Starting tests")
-	testLogs, err := runTestContainer(env.ctx, env.bffServicePort)
+	testLogs, err := runTestContainer(env)
 	if err != nil {
 		t.Fatalf("Could not run test container: %s", err)
 	}
@@ -84,13 +85,13 @@ func runTests(t *testing.T, env *testEnvironment) {
 }
 
 func teardown(t *testing.T, env *testEnvironment) {
-	if env.bffServiceHost != nil {
-		if err := env.bffServiceHost.Terminate(env.ctx); err != nil {
+	if env.bffServiceContainer != nil {
+		if err := env.bffServiceContainer.Terminate(env.ctx); err != nil {
 			t.Logf("Failed to terminate BFF container: %v", err)
 		}
 	}
-	if env.domainServiceHost != nil {
-		if err := env.domainServiceHost.Terminate(env.ctx); err != nil {
+	if env.domainServiceContainer != nil {
+		if err := env.domainServiceContainer.Terminate(env.ctx); err != nil {
 			t.Logf("Failed to terminate stub container: %v", err)
 		}
 	}
@@ -134,7 +135,7 @@ func startDomainService(env *testEnvironment) (testcontainers.Container, string,
 	return stubContainer, domainServicePort.Port(), nil
 }
 
-func startBFFService(t *testing.T, env *testEnvironment, domainServicePort string) (testcontainers.Container, string, error) {
+func startBFFService(t *testing.T, env *testEnvironment) (testcontainers.Container, string, error) {
 	dockerfilePath := "Dockerfile"
 
 	bffImageName := "specmatic-order-bff-grpc-go"
@@ -155,7 +156,7 @@ func startBFFService(t *testing.T, env *testEnvironment, domainServicePort strin
 	req := testcontainers.ContainerRequest{
 		Image: bffImageName,
 		Env: map[string]string{
-			"DOMAIN_SERVER_PORT": domainServicePort,
+			"DOMAIN_SERVER_PORT": env.domainServiceDyanmicPort,
 			"DOMAIN_SERVER_HOST": "host.docker.internal",
 		},
 		ExposedPorts: []string{port.Port() + "/tcp"},
@@ -180,13 +181,13 @@ func startBFFService(t *testing.T, env *testEnvironment, domainServicePort strin
 	return bffContainer, bffPort.Port(), nil
 }
 
-func runTestContainer(ctx context.Context, bffPort string) (string, error) {
+func runTestContainer(env *testEnvironment) (string, error) {
 	pwd, err := os.Getwd()
 	if err != nil {
 		log.Fatalf("Error getting current directory: %v", err)
 	}
 
-	bffPortInt, err := strconv.Atoi(bffPort)
+	bffPortInt, err := strconv.Atoi(env.bffServiceDyanmicPort)
 	if err != nil {
 		return "", fmt.Errorf("invalid port number: %w", err)
 	}
@@ -203,17 +204,17 @@ func runTestContainer(ctx context.Context, bffPort string) (string, error) {
 		WaitingFor: wait.ForLog("Tests completed"),
 	}
 
-	testContainer, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
+	testContainer, err := testcontainers.GenericContainer(env.ctx, testcontainers.GenericContainerRequest{
 		ContainerRequest: req,
 		Started:          true,
 	})
 	if err != nil {
 		return "", err
 	}
-	defer testContainer.Terminate(ctx)
+	defer testContainer.Terminate(env.ctx)
 
 	// Streaming testing logs to terminal
-	logReader, err := testContainer.Logs(ctx)
+	logReader, err := testContainer.Logs(env.ctx)
 	if err != nil {
 		return "", err
 	}

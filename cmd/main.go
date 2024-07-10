@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net"
 
@@ -21,8 +22,9 @@ func main() {
 		log.Fatalf("Failed to load configuration: %v", err)
 	}
 
-	// backendServerAddress := cfg.Backend.Host + ":" + cfg.Backend.Port
-	backendServerAddress := "host.docker.internal" + ":" + cfg.Backend.Port
+	fmt.Println("port : " + cfg.Backend.Port)
+
+	backendServerAddress := cfg.Backend.Host + ":" + cfg.Backend.Port
 
 	orderServiceAddress := backendServerAddress
 	productServiceAddress := backendServerAddress
@@ -55,7 +57,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	log.Println("Starting gRPC server on :" + cfg.BFFServer.Port)
+	log.Printf("Starting gRPC server on %s", cfg.BFFServer.Port)
 	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatal(err)
 	}

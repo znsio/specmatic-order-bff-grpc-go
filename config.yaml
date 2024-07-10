@@ -2,7 +2,7 @@ backend:
   host: "localhost"   
   port: "9000"        
 
-bff-server:
+bffserver:
   port: "8090"       
 
 
