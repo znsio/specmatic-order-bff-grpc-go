@@ -26,30 +26,51 @@
 
 ### Building and running the application
 
-1. Installing prequisites
+1. Installing pre-requisites
 
     ```shell
     go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.28
     go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.2
     ```
+   1.1. Add protoc-gen-go to your path using the following command:
 
-2. Building the application
+    ```shell
+    echo 'export PATH=$PATH:$(go env GOPATH)/bin' >> ~/.bash_profile 
+    source ~/.bash_profile 
+    ```   
 
+2. Installing the `buf` tool
+    ```shell
+    brew install bufbuild/buf/buf
    ```
+   For more options to install buf tool, refer to [buf installation guide](https://docs.buf.build/installation)
+
+
+3. Building the application
+
+   ```shell
    go mod tidy
    go mod download
    make clean
    make all
-   ./specmatic-order-bff-grpc-go
    ```
 
 ## Running Contract Tests
 
 ### Using specmatic-grpc JAR file
 
-* Start stub server - `java -jar specmatic-grpc.jar stub`
-* Run the app - `./specmatic-order-bff-grpc-go`
-* Run contract tests (with API resiliency switched on) - `java -DSPECMATIC_GENERATIVE_TESTS=true -jar specmatic-grpc.jar test --port=50051`
+* Start Specmatic stub server - 
+  ```shell
+      java -jar lib/specmatic-grpc-0.0.2-TRIAL-all.jar stub
+  ```
+* Run the Go BFF app
+   ```shell
+      ./specmatic-order-bff-grpc-go
+    ```
+* Run contract tests (with API resiliency switched on)
+   ```shell
+    java -DSPECMATIC_GENERATIVE_TESTS=true -jar lib/specmatic-grpc-0.0.2-TRIAL-all.jar test --port=8080
+   ```
 
 ### Using specmatic-grpc docker image (preferred) with test containers
 

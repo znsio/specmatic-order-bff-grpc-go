@@ -6,4 +6,3 @@ sources:
     stub:
       - in/specmatic/examples/store/order_api_grpc/order.proto
       - in/specmatic/examples/store/order_api_grpc/product.proto
-
