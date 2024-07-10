@@ -48,7 +48,7 @@
 
 * Start stub server - `java -jar specmatic-grpc.jar stub`
 * Run the app - `./specmatic-order-bff-grpc-go`
-* Run contract tests (with API resiliency switched on) - `java -DSPECMATIC_GENERATIVE_TESTS=true -jar specmatic-grpc.jar test`
+* Run contract tests (with API resiliency switched on) - `java -DSPECMATIC_GENERATIVE_TESTS=true -jar specmatic-grpc.jar test --port=50051`
 
 ## Debugging steps
 
