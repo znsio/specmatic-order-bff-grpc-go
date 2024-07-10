@@ -9,69 +9,116 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"specmatic-order-bff-grpc-go/internal/com/store/order/bff/config"
 	"strconv"
 	"testing"
-	"time"
 
-	"github.com/schollz/progressbar/v3"
+	"github.com/docker/go-connections/nat"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
 )
 
-var bffDockerfile = "Dockerfile"
+type testEnvironment struct {
+	ctx               context.Context
+	domainServiceHost testcontainers.Container
+	domainServicePort string
+	bffServiceHost    testcontainers.Container
+	bffServicePort    string
+	config            *config.Config
+}
 
 func TestIntegration(t *testing.T) {
-	ctx := context.Background()
 
-	// Step 1: Start stub container
-	printHeader(1, "Starting Domain Stub")
-	bar := startProgressBar()
-	stubContainer, stubPort, err := startStubContainer(ctx)
-	bar.Finish()
+	// SETUP (domain grpc server and bff grpc server )
+	env, err := setup(t)
 	if err != nil {
-		t.Fatalf("Could not start stub container: %s", err)
+		t.Fatalf("Setup failed: %v", err)
 	}
-	defer stubContainer.Terminate(ctx)
 
-	// Step 2: Start BFF container
-	printHeader(2, "Starting BFF app")
-	bffContainer, bffPort, err := startBFFContainer(ctx, stubPort)
+	// RUN (on test container)
+	runTests(t, env)
+
+	// TEAR DOWN
+	defer teardown(t, env)
+}
+
+func setup(t *testing.T) (*testEnvironment, error) {
+	env := &testEnvironment{
+		ctx: context.Background(),
+	}
+
+	var err error
+
+	// Load configuration
+	cfg, err := config.LoadConfig("config.yaml")
 	if err != nil {
-		t.Fatalf("Could not start BFF container: %s", err)
+		return nil, fmt.Errorf("failed to load configuration: %w", err)
 	}
-	defer bffContainer.Terminate(ctx)
+	env.config = cfg
 
-	// Step 3: Run test container
-	printHeader(3, "Starting tests")
-	testLogs, err := runTestContainer(ctx, bffPort)
+	printHeader(t, 1, "Starting Domain Service")
+	env.domainServiceHost, env.domainServicePort, err = startDomainService(env)
+	if err != nil {
+		return nil, fmt.Errorf("could not start domain service container: %w", err)
+	}
+
+	printHeader(t, 2, "Starting BFF Service")
+	env.bffServiceHost, env.bffServicePort, err = startBFFService(t, env, env.domainServicePort)
+	if err != nil {
+		return nil, fmt.Errorf("could not start bff service container: %w", err)
+	}
+
+	return env, nil
+}
+
+func runTests(t *testing.T, env *testEnvironment) {
+	printHeader(t, 3, "Starting tests")
+	testLogs, err := runTestContainer(env.ctx, env.bffServicePort)
 	if err != nil {
 		t.Fatalf("Could not run test container: %s", err)
 	}
 
 	// Print test outcomes
-	fmt.Println("Test Results:")
-	fmt.Println(testLogs)
+	t.Log("Test Results:")
+	t.Log(testLogs)
 }
 
-func startStubContainer(ctx context.Context) (testcontainers.Container, string, error) {
+func teardown(t *testing.T, env *testEnvironment) {
+	if env.bffServiceHost != nil {
+		if err := env.bffServiceHost.Terminate(env.ctx); err != nil {
+			t.Logf("Failed to terminate BFF container: %v", err)
+		}
+	}
+	if env.domainServiceHost != nil {
+		if err := env.domainServiceHost.Terminate(env.ctx); err != nil {
+			t.Logf("Failed to terminate stub container: %v", err)
+		}
+	}
+}
 
+func startDomainService(env *testEnvironment) (testcontainers.Container, string, error) {
 	pwd, err := os.Getwd()
 	if err != nil {
 		log.Fatalf("Error getting current directory: %v", err)
 	}
 
+	// Create a nat.Port from the string port
+	port, err := nat.NewPort("tcp", env.config.Backend.Port)
+	if err != nil {
+		return nil, "", fmt.Errorf("invalid port number: %w", err)
+	}
+
 	req := testcontainers.ContainerRequest{
 		Image:        "znsio/specmatic-grpc-trial",
-		ExposedPorts: []string{"9000/tcp"},
+		ExposedPorts: []string{port.Port() + "/tcp"},
 		Cmd:          []string{"stub"},
 		Mounts: testcontainers.Mounts(
 			testcontainers.BindMount(filepath.Join(pwd, "specmatic.yaml"), "/usr/src/app/specmatic.yaml"),
 		),
 		WaitingFor: wait.ForLog("Stub server is running"),
-		// WaitingFor:   wait.ForListeningPort("9000/tcp"),
 	}
 
-	stubContainer, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
+	stubContainer, err := testcontainers.GenericContainer(env.ctx, testcontainers.GenericContainerRequest{
 		ContainerRequest: req,
 		Started:          true,
 	})
@@ -79,57 +126,45 @@ func startStubContainer(ctx context.Context) (testcontainers.Container, string, 
 		return nil, "", err
 	}
 
-	stubPort, err := stubContainer.MappedPort(ctx, "9000")
+	domainServicePort, err := stubContainer.MappedPort(env.ctx, port)
 	if err != nil {
 		return nil, "", err
 	}
 
-	return stubContainer, stubPort.Port(), nil
+	return stubContainer, domainServicePort.Port(), nil
 }
 
-func startBFFContainer(ctx context.Context, stubPort string) (testcontainers.Container, string, error) {
-	projectRoot, err := findProjectRoot()
-	if err != nil {
-		fmt.Println("Could not find project root:", err)
-	}
+func startBFFService(t *testing.T, env *testEnvironment, domainServicePort string) (testcontainers.Container, string, error) {
+	dockerfilePath := "Dockerfile"
 
-	// Use projectRoot when referring to files at the root of your project
-	dockerfilePath := filepath.Join(projectRoot, "Dockerfile")
-
-	// Build the image using Docker CLI
 	bffImageName := "specmatic-order-bff-grpc-go"
 	buildCmd := exec.Command("docker", "build", "-t", bffImageName, "-f", dockerfilePath, ".")
-	buildCmd.Stdout = os.Stdout
-	buildCmd.Stderr = os.Stderr
+	// enable the following for detailed logs of bff service docerization.
+	// buildCmd.Stdout = os.Stdout
+	// buildCmd.Stderr = os.Stderr
 	if err := buildCmd.Run(); err != nil {
 		return nil, "", fmt.Errorf("could not build BFF image: %w", err)
 	}
 
-	// // Capture both stdout and stderr
-	// var out bytes.Buffer
-	// buildCmd.Stdout = &out
-	// buildCmd.Stderr = &out
+	// Create a nat.Port from the string port
+	port, err := nat.NewPort("tcp", env.config.BFFServer.Port)
+	if err != nil {
+		return nil, "", fmt.Errorf("invalid port number: %w", err)
+	}
 
-	// if err := buildCmd.Run(); err != nil {
-	// 	fmt.Println("Docker build output:")
-	// 	fmt.Println(out.String())
-	// 	return nil, "", fmt.Errorf("could not build BFF image: %w", err)
-	// }
-
-	// Using the built image
 	req := testcontainers.ContainerRequest{
 		Image: bffImageName,
 		Env: map[string]string{
-			"DOMAIN_SERVER_PORT": stubPort,
+			"DOMAIN_SERVER_PORT": domainServicePort,
+			"DOMAIN_SERVER_HOST": "host.docker.internal",
 		},
-		ExposedPorts: []string{"8090/tcp"},
-		// WaitingFor:   wait.ForListeningPort("8080/tcp"),
-		WaitingFor: wait.ForLog("Starting gRPC server"),
+		ExposedPorts: []string{port.Port() + "/tcp"},
+		WaitingFor:   wait.ForLog("Starting gRPC server"),
 	}
 
-	fmt.Println("Container created")
+	t.Log("Container created")
 
-	bffContainer, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
+	bffContainer, err := testcontainers.GenericContainer(env.ctx, testcontainers.GenericContainerRequest{
 		ContainerRequest: req,
 		Started:          true,
 	})
@@ -137,7 +172,7 @@ func startBFFContainer(ctx context.Context, stubPort string) (testcontainers.Con
 		return nil, "", err
 	}
 
-	bffPort, err := bffContainer.MappedPort(ctx, "8090")
+	bffPort, err := bffContainer.MappedPort(env.ctx, port)
 	if err != nil {
 		return nil, "", err
 	}
@@ -151,10 +186,9 @@ func runTestContainer(ctx context.Context, bffPort string) (string, error) {
 		log.Fatalf("Error getting current directory: %v", err)
 	}
 
-	// Convert bffPort from string to int
 	bffPortInt, err := strconv.Atoi(bffPort)
 	if err != nil {
-		// t.Fatalf("Invalid port number: %s", err)
+		return "", fmt.Errorf("invalid port number: %w", err)
 	}
 
 	req := testcontainers.ContainerRequest{
@@ -167,7 +201,6 @@ func runTestContainer(ctx context.Context, bffPort string) (string, error) {
 			testcontainers.BindMount(filepath.Join(pwd, "specmatic.yaml"), "/usr/src/app/specmatic.yaml"),
 		),
 		WaitingFor: wait.ForLog("Tests completed"),
-		// WaitingFor:   wait.ForListeningPort("9000/tcp"),
 	}
 
 	testContainer, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
@@ -179,6 +212,7 @@ func runTestContainer(ctx context.Context, bffPort string) (string, error) {
 	}
 	defer testContainer.Terminate(ctx)
 
+	// Streaming testing logs to terminal
 	logReader, err := testContainer.Logs(ctx)
 	if err != nil {
 		return "", err
@@ -194,48 +228,10 @@ func runTestContainer(ctx context.Context, bffPort string) (string, error) {
 	return buf.String(), nil
 }
 
-func printHeader(stepNum int, title string) {
-	fmt.Println("")
-	fmt.Printf("======== STEP %d =========\n", stepNum)
-	fmt.Println(title)
-	fmt.Println("=========================")
-	fmt.Println("")
-}
-
-func startProgressBar() *progressbar.ProgressBar {
-	// Create a progress bar
-	bar := progressbar.NewOptions(-1, // Use -1 for an indefinite progress bar
-		progressbar.OptionSetDescription("..."),
-		progressbar.OptionSpinnerType(22),
-		progressbar.OptionFullWidth(),
-		progressbar.OptionClearOnFinish(),
-	)
-
-	// Update the progress bar in a separate goroutine
-	go func() {
-		for {
-			bar.Add(1)
-			time.Sleep(100 * time.Millisecond) // Adjust the speed as necessary
-		}
-	}()
-
-	return bar
-}
-
-func findProjectRoot() (string, error) {
-	dir, err := os.Getwd()
-	if err != nil {
-		return "", err
-	}
-
-	for {
-		if _, err := os.Stat(filepath.Join(dir, "go.mod")); err == nil {
-			return dir, nil
-		}
-		parent := filepath.Dir(dir)
-		if parent == dir {
-			return "", fmt.Errorf("could not find project root")
-		}
-		dir = parent
-	}
+func printHeader(t *testing.T, stepNum int, title string) {
+	t.Log("")
+	t.Logf("======== STEP %d =========", stepNum)
+	t.Log(title)
+	t.Log("=========================")
+	t.Log("")
 }

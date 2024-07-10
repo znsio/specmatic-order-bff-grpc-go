@@ -1,0 +1,9 @@
+backend:
+  host: "localhost"   
+  port: "9000"        
+
+bff-server:
+  port: "8090"       
+
+
+

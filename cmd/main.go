@@ -3,8 +3,8 @@ package main
 import (
 	"log"
 	"net"
-	"os"
 
+	"specmatic-order-bff-grpc-go/internal/com/store/order/bff/config"
 	"specmatic-order-bff-grpc-go/internal/com/store/order/bff/handlers"
 	"specmatic-order-bff-grpc-go/internal/com/store/order/bff/services"
 	"specmatic-order-bff-grpc-go/internal/com/store/order/bff/utils"
@@ -16,10 +16,16 @@ import (
 )
 
 func main() {
-	domainServerPort := os.Getenv("DOMAIN_SERVER_PORT")
-	// Service addresses can be loaded from configuration (e.g., YAML or environment variables)
-	orderServiceAddress := "host.docker.internal:" + domainServerPort
-	productServiceAddress := "host.docker.internal:" + domainServerPort
+	cfg, err := config.LoadConfig("config.yaml")
+	if err != nil {
+		log.Fatalf("Failed to load configuration: %v", err)
+	}
+
+	// backendServerAddress := cfg.Backend.Host + ":" + cfg.Backend.Port
+	backendServerAddress := "host.docker.internal" + ":" + cfg.Backend.Port
+
+	orderServiceAddress := backendServerAddress
+	productServiceAddress := backendServerAddress
 
 	// Connect to domain services
 	orderConn, err := utils.ConnectToService(orderServiceAddress)
@@ -44,12 +50,12 @@ func main() {
 
 	reflection.Register(grpcServer)
 
-	lis, err := net.Listen("tcp", ":8090")
+	lis, err := net.Listen("tcp", ":"+cfg.BFFServer.Port)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	log.Println("Starting gRPC server on :8090")
+	log.Println("Starting gRPC server on :" + cfg.BFFServer.Port)
 	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatal(err)
 	}
