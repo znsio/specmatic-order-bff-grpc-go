@@ -24,7 +24,14 @@
    git config submodule.recurse true
    ```
 
-### Building and running the application
+### Contract Testing BFF using specmatic-grpc docker image (preferred) with test containers
+
+```shell
+    go mod tidy
+    go test integration_test.go -v -count=1 
+```
+
+### Contract Testing BFF by building and running the application using specmatic-grpc JAR file (old-school)
 
 1. Installing pre-requisites
 
@@ -71,12 +78,6 @@
    ```shell
     java -DSPECMATIC_GENERATIVE_TESTS=true -jar lib/specmatic-grpc-0.0.2-TRIAL-all.jar test --port=8080
    ```
-
-### Using specmatic-grpc docker image (preferred) with test containers
-
-```shell
-go test integration_test.go -v -count=1 
-```
 
 ## Debugging steps
 

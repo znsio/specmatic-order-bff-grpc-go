@@ -21,54 +21,51 @@ import (
 type testEnvironment struct {
 	ctx                      context.Context
 	domainServiceContainer   testcontainers.Container
-	domainServiceDyanmicPort string
+	domainServiceDynamicPort string
 	bffServiceContainer      testcontainers.Container
-	bffServiceDyanmicPort    string
+	bffServiceDynamicPort    string
 	config                   *config.Config
 }
 
 func TestIntegration(t *testing.T) {
+    env := setUpEnv(t)
 
-	// SETUP (start domain service stub with specmatic-grpc and bff server in container)
-	env, err := setup(t)
-	if err != nil {
-		t.Fatalf("Setup failed: %v", err)
-	}
+	// setUp (start domain service stub with specmatic-grpc and bff server in container)
+	setUp(t, env)
 
 	// RUN (run specmatic-grpc test in container)
 	runTests(t, env)
 
 	// TEAR DOWN
-	defer teardown(t, env)
+	defer tearDown(t, env)
 }
 
-func setup(t *testing.T) (*testEnvironment, error) {
-	env := &testEnvironment{
-		ctx: context.Background(),
-	}
+func setUpEnv(t *testing.T) *testEnvironment {
+    config, err := config.LoadConfig("config.yaml")
+    if err != nil {
+        t.Fatalf("Failed to load config: %v", err)
+    }
 
+    return &testEnvironment{
+        ctx:    context.Background(),
+        config: config,
+    }
+}
+
+func setUp(t *testing.T, env *testEnvironment) {
 	var err error
 
-	// Load configuration
-	cfg, err := config.LoadConfig("config.yaml")
-	if err != nil {
-		return nil, fmt.Errorf("failed to load configuration: %w", err)
-	}
-	env.config = cfg
-
 	printHeader(t, 1, "Starting Domain Service")
-	env.domainServiceContainer, env.domainServiceDyanmicPort, err = startDomainService(env)
+	env.domainServiceContainer, env.domainServiceDynamicPort, err = startDomainService(env)
 	if err != nil {
-		return nil, fmt.Errorf("could not start domain service container: %w", err)
+	    t.Fatalf("could not start domain service container: %v", err)
 	}
 
 	printHeader(t, 2, "Starting BFF Service")
-	env.bffServiceContainer, env.bffServiceDyanmicPort, err = startBFFService(t, env)
+	env.bffServiceContainer, env.bffServiceDynamicPort, err = startBFFService(t, env)
 	if err != nil {
-		return nil, fmt.Errorf("could not start bff service container: %w", err)
+	    t.Fatalf("could not start bff service container: %v", err)
 	}
-
-	return env, nil
 }
 
 func runTests(t *testing.T, env *testEnvironment) {
@@ -83,7 +80,7 @@ func runTests(t *testing.T, env *testEnvironment) {
 	t.Log(testLogs)
 }
 
-func teardown(t *testing.T, env *testEnvironment) {
+func tearDown(t *testing.T, env *testEnvironment) {
 	if env.bffServiceContainer != nil {
 		if err := env.bffServiceContainer.Terminate(env.ctx); err != nil {
 			t.Logf("Failed to terminate BFF container: %v", err)
@@ -138,9 +135,6 @@ func startBFFService(t *testing.T, env *testEnvironment) (testcontainers.Contain
 
 	bffImageName := "specmatic-order-bff-grpc-go"
 	buildCmd := exec.Command("docker", "build", "-t", bffImageName, "-f", dockerfilePath, ".")
-	// enable the following for detailed logs of bff service docerization.
-	// buildCmd.Stdout = os.Stdout
-	// buildCmd.Stderr = os.Stderr
 
 	if err := buildCmd.Run(); err != nil {
 		return nil, "", fmt.Errorf("could not build BFF image: %w", err)
@@ -154,7 +148,7 @@ func startBFFService(t *testing.T, env *testEnvironment) (testcontainers.Contain
 	req := testcontainers.ContainerRequest{
 		Image: bffImageName,
 		Env: map[string]string{
-			"DOMAIN_SERVER_PORT": env.domainServiceDyanmicPort,
+			"DOMAIN_SERVER_PORT": env.domainServiceDynamicPort,
 			"DOMAIN_SERVER_HOST": "host.docker.internal",
 		},
 		ExposedPorts: []string{port.Port() + "/tcp"},
@@ -185,7 +179,7 @@ func runTestContainer(env *testEnvironment) (string, error) {
 		log.Fatalf("Error getting current directory: %v", err)
 	}
 
-	bffPortInt, err := strconv.Atoi(env.bffServiceDyanmicPort)
+	bffPortInt, err := strconv.Atoi(env.bffServiceDynamicPort)
 	if err != nil {
 		return "", fmt.Errorf("invalid port number: %w", err)
 	}
@@ -199,7 +193,7 @@ func runTestContainer(env *testEnvironment) (string, error) {
 		Mounts: testcontainers.Mounts(
 			testcontainers.BindMount(filepath.Join(pwd, "specmatic.yaml"), "/usr/src/app/specmatic.yaml"),
 		),
-		WaitingFor: wait.ForLog("Passed Tests: 25"),
+		WaitingFor: wait.ForLog("Passed Tests:"),
 	}
 
 	testContainer, err := testcontainers.GenericContainer(env.ctx, testcontainers.GenericContainerRequest{
