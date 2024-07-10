@@ -45,21 +45,25 @@ jobs:
         run: 
           echo "$GOPATH/bin" >> $GITHUB_PATH
       
-      - name: Build with Makefile
-        run: make all
-      
-      - name: Set up Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin' # See 'Supported distributions' for available options
-          java-version: '17'
-      - run: java --version
+      - name: start docerized tests
+        run: go test integration_test.go -v -count=1
 
-      - name: Start gRPC Stub
-        run: java --version && java -jar lib/specmatic-grpc-0.0.1-TRIAL-all.jar stub &
-
-      - name: Start Golang gRPC Server
-        run: ./specmatic-order-bff-grpc-go &
       
-      - name: Start gRPC Contract Test
-        run: java -DSPECMATIC_GENERATIVE_TESTS=true -jar lib/specmatic-grpc-0.0.1-TRIAL-all.jar test --port 50051
+      # - name: Build with Makefile
+      #   run: make all
+      
+      # - name: Set up Java
+      #   uses: actions/setup-java@v4
+      #   with:
+      #     distribution: 'temurin' # See 'Supported distributions' for available options
+      #     java-version: '17'
+      # - run: java --version
+
+      # - name: Start gRPC Stub
+      #   run: java --version && java -jar lib/specmatic-grpc-0.0.1-TRIAL-all.jar stub &
+
+      # - name: Start Golang gRPC Server
+      #   run: ./specmatic-order-bff-grpc-go &
+      
+      # - name: Start gRPC Contract Test
+      #   run: java -DSPECMATIC_GENERATIVE_TESTS=true -jar lib/specmatic-grpc-0.0.1-TRIAL-all.jar test --port 50051
