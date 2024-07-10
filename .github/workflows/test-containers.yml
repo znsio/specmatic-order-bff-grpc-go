@@ -45,4 +45,4 @@ jobs:
           wait: true
 
       - name: start dockerized tests
-        run: go test integration_test.go -v -count=1
+        run: go test contract_test.go -v -count=1
