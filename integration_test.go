@@ -159,7 +159,10 @@ func runTestContainer(ctx context.Context, bffPort string) (string, error) {
 
 	req := testcontainers.ContainerRequest{
 		Image: "znsio/specmatic-grpc-trial",
-		Cmd:   []string{"test", fmt.Sprintf("--port=%d", bffPortInt), "--host=host.docker.internal"},
+		Env: map[string]string{
+			"SPECMATIC_GENERATIVE_TESTS": "true",
+		},
+		Cmd: []string{"test", fmt.Sprintf("--port=%d", bffPortInt), "--host=host.docker.internal"},
 		Mounts: testcontainers.Mounts(
 			testcontainers.BindMount(filepath.Join(pwd, "specmatic.yaml"), "/usr/src/app/specmatic.yaml"),
 		),
