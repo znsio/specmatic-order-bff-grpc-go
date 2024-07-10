@@ -44,8 +44,13 @@ jobs:
       - name: setup env
         run: 
           echo "$GOPATH/bin" >> $GITHUB_PATH
-      
-      - name: start docerized tests
+
+      - name: Setup Testcontainers Cloud Client
+        uses: atomicjar/testcontainers-cloud-setup-action@v1
+        with:
+          token: ${{ secrets.TC_CLOUD_TOKEN }}
+
+      - name: start dockerized tests
         run: go test integration_test.go -v -count=1
 
       
