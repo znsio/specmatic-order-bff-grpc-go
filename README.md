@@ -42,13 +42,20 @@
    make all
    ./specmatic-order-bff-grpc-go
    ```
-   
 
 ## Running Contract Tests
+
+### Using specmatic-grpc JAR file
 
 * Start stub server - `java -jar specmatic-grpc.jar stub`
 * Run the app - `./specmatic-order-bff-grpc-go`
 * Run contract tests (with API resiliency switched on) - `java -DSPECMATIC_GENERATIVE_TESTS=true -jar specmatic-grpc.jar test --port=50051`
+
+### Using specmatic-grpc docker image (preferred) with test containers
+
+```shell
+go test integration_test.go -v -count=1 
+```
 
 ## Debugging steps
 

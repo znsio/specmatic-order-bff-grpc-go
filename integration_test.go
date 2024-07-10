@@ -29,13 +29,13 @@ type testEnvironment struct {
 
 func TestIntegration(t *testing.T) {
 
-	// SETUP (domain grpc server and bff grpc server )
+	// SETUP (start domain service stub with specmatic-grpc and bff server in container)
 	env, err := setup(t)
 	if err != nil {
 		t.Fatalf("Setup failed: %v", err)
 	}
 
-	// RUN (on test container)
+	// RUN (run specmatic-grpc test in container)
 	runTests(t, env)
 
 	// TEAR DOWN
@@ -102,7 +102,6 @@ func startDomainService(env *testEnvironment) (testcontainers.Container, string,
 		log.Fatalf("Error getting current directory: %v", err)
 	}
 
-	// Create a nat.Port from the string port
 	port, err := nat.NewPort("tcp", env.config.Backend.Port)
 	if err != nil {
 		return nil, "", fmt.Errorf("invalid port number: %w", err)
@@ -142,11 +141,11 @@ func startBFFService(t *testing.T, env *testEnvironment) (testcontainers.Contain
 	// enable the following for detailed logs of bff service docerization.
 	// buildCmd.Stdout = os.Stdout
 	// buildCmd.Stderr = os.Stderr
+
 	if err := buildCmd.Run(); err != nil {
 		return nil, "", fmt.Errorf("could not build BFF image: %w", err)
 	}
 
-	// Create a nat.Port from the string port
 	port, err := nat.NewPort("tcp", env.config.BFFServer.Port)
 	if err != nil {
 		return nil, "", fmt.Errorf("invalid port number: %w", err)
