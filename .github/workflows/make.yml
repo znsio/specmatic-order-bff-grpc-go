@@ -62,4 +62,4 @@ jobs:
         run: ./specmatic-order-bff-grpc-go &
 
       - name: Start gRPC Contract Test
-        run: java -DSPECMATIC_GENERATIVE_TESTS=true -jar lib/specmatic-grpc-0.0.2-TRIAL-all.jar test --port 50051
+        run: java -DSPECMATIC_GENERATIVE_TESTS=true -jar lib/specmatic-grpc-0.0.2-TRIAL-all.jar test --port 8090
