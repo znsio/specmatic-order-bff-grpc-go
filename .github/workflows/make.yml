@@ -45,6 +45,10 @@ jobs:
         run:
           echo "$GOPATH/bin" >> $GITHUB_PATH
 
+      - name: Set BFF port from config
+        run: |
+          go run scripts/read_port.go >> $GITHUB_ENV
+
       - name: Build with Makefile
         run: make all
 
@@ -62,4 +66,4 @@ jobs:
         run: ./specmatic-order-bff-grpc-go &
 
       - name: Start gRPC Contract Test
-        run: java -DSPECMATIC_GENERATIVE_TESTS=true -jar lib/specmatic-grpc-0.0.2-TRIAL-all.jar test --port 8080
+        run: java -DSPECMATIC_GENERATIVE_TESTS=true -jar lib/specmatic-grpc-0.0.2-TRIAL-all.jar test --port ${{ env.BFF_SERVER_PORT }}
