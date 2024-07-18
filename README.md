@@ -67,7 +67,7 @@ make all
 
 * Start Specmatic stub server - 
 ```shell
-java -jar lib/specmatic-grpc-0.0.2-TRIAL-all.jar stub
+java -jar lib/specmatic-grpc-0.0.3-TRIAL-all.jar stub
 ```
 * Run the Go BFF app
 ```shell
@@ -75,7 +75,7 @@ java -jar lib/specmatic-grpc-0.0.2-TRIAL-all.jar stub
 ```
 * Run contract tests (with API resiliency switched on)
 ```shell
-java -DSPECMATIC_GENERATIVE_TESTS=true -jar lib/specmatic-grpc-0.0.2-TRIAL-all.jar test --port=8080
+java -DSPECMATIC_GENERATIVE_TESTS=true -jar lib/specmatic-grpc-0.0.3-TRIAL-all.jar test --port=8080
 ```
 
 ## Debugging steps
