@@ -25,7 +25,7 @@ func LoadConfig(configPath string) (*Config, error) {
 	// Set default values
 	viper.SetDefault("backend.host", "localhost")
 	viper.SetDefault("backend.port", "9000")
-	viper.SetDefault("bffserver.port", "8090")
+	viper.SetDefault("bffserver.port", "8080")
 
 	// Read the config file
 	viper.SetConfigFile(configPath)

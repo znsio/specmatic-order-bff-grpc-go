@@ -7,7 +7,6 @@ import (
 	"io"
 	"log"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"specmatic-order-bff-grpc-go/internal/com/store/order/bff/config"
 	"strconv"
@@ -28,7 +27,7 @@ type testEnvironment struct {
 }
 
 func TestIntegration(t *testing.T) {
-    env := setUpEnv(t)
+	env := setUpEnv(t)
 
 	// setUp (start domain service stub with specmatic-grpc and bff server in container)
 	setUp(t, env)
@@ -41,15 +40,15 @@ func TestIntegration(t *testing.T) {
 }
 
 func setUpEnv(t *testing.T) *testEnvironment {
-    config, err := config.LoadConfig("config.yaml")
-    if err != nil {
-        t.Fatalf("Failed to load config: %v", err)
-    }
+	config, err := config.LoadConfig("config.yaml")
+	if err != nil {
+		t.Fatalf("Failed to load config: %v", err)
+	}
 
-    return &testEnvironment{
-        ctx:    context.Background(),
-        config: config,
-    }
+	return &testEnvironment{
+		ctx:    context.Background(),
+		config: config,
+	}
 }
 
 func setUp(t *testing.T, env *testEnvironment) {
@@ -58,13 +57,13 @@ func setUp(t *testing.T, env *testEnvironment) {
 	printHeader(t, 1, "Starting Domain Service")
 	env.domainServiceContainer, env.domainServiceDynamicPort, err = startDomainService(env)
 	if err != nil {
-	    t.Fatalf("could not start domain service container: %v", err)
+		t.Fatalf("could not start domain service container: %v", err)
 	}
 
 	printHeader(t, 2, "Starting BFF Service")
 	env.bffServiceContainer, env.bffServiceDynamicPort, err = startBFFService(t, env)
 	if err != nil {
-	    t.Fatalf("could not start bff service container: %v", err)
+		t.Fatalf("could not start bff service container: %v", err)
 	}
 }
 
@@ -131,31 +130,27 @@ func startDomainService(env *testEnvironment) (testcontainers.Container, string,
 }
 
 func startBFFService(t *testing.T, env *testEnvironment) (testcontainers.Container, string, error) {
-	dockerfilePath := "Dockerfile"
-
-	bffImageName := "specmatic-order-bff-grpc-go"
-	buildCmd := exec.Command("docker", "build", "-t", bffImageName, "-f", dockerfilePath, ".")
-
-	if err := buildCmd.Run(); err != nil {
-		return nil, "", fmt.Errorf("could not build BFF image: %w", err)
-	}
 
 	port, err := nat.NewPort("tcp", env.config.BFFServer.Port)
 	if err != nil {
 		return nil, "", fmt.Errorf("invalid port number: %w", err)
 	}
 
+	dockerfilePath := "Dockerfile"
+	contextPath := "." // Adjust this to the path containing your Dockerfile
+
 	req := testcontainers.ContainerRequest{
-		Image: bffImageName,
+		FromDockerfile: testcontainers.FromDockerfile{
+			Context:    contextPath,
+			Dockerfile: dockerfilePath,
+		},
 		Env: map[string]string{
 			"DOMAIN_SERVER_PORT": env.domainServiceDynamicPort,
 			"DOMAIN_SERVER_HOST": "host.docker.internal",
 		},
-		ExposedPorts: []string{port.Port() + "/tcp"},
+		ExposedPorts: []string{env.config.BFFServer.Port + "/tcp"},
 		WaitingFor:   wait.ForLog("Starting gRPC server"),
 	}
-
-	t.Log("Container created")
 
 	bffContainer, err := testcontainers.GenericContainer(env.ctx, testcontainers.GenericContainerRequest{
 		ContainerRequest: req,

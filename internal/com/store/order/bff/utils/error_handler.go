@@ -12,8 +12,9 @@ func ValidateReq(req proto.Message) error {
 		return NewCustomError(codes.Internal, "Failed to create validator", err.Error())
 	}
 	err = validator.Validate(req)
+
 	if err != nil {
-		return NewCustomError(codes.InvalidArgument, "Validation error", err.Error())
+		return NewCustomError(codes.InvalidArgument, err.Error(), "Validation error")
 	}
 	return nil
 }
