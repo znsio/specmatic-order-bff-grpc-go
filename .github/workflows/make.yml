@@ -60,10 +60,10 @@ jobs:
       - run: java --version
 
       - name: Start gRPC Stub
-        run: java --version && java -jar lib/specmatic-grpc-0.0.3-TRIAL-all.jar stub &
+        run: java --version && java -jar lib/specmatic-grpc-0.0.4-TRIAL-all.jar stub &
 
       - name: Start Golang gRPC Server
         run: ./specmatic-order-bff-grpc-go &
 
       - name: Start gRPC Contract Test
-        run: java -DSPECMATIC_GENERATIVE_TESTS=true -jar lib/specmatic-grpc-0.0.3-TRIAL-all.jar test --port ${{ env.BFF_SERVER_PORT }}
+        run: java -DSPECMATIC_GENERATIVE_TESTS=true -jar lib/specmatic-grpc-0.0.4-TRIAL-all.jar test --port ${{ env.BFF_SERVER_PORT }}
