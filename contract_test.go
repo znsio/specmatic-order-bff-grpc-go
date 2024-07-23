@@ -137,7 +137,7 @@ func startBFFService(t *testing.T, env *testEnvironment) (testcontainers.Contain
 	}
 
 	dockerfilePath := "Dockerfile"
-	contextPath := "." // Adjust this to the path containing your Dockerfile
+	contextPath := "."
 
 	req := testcontainers.ContainerRequest{
 		FromDockerfile: testcontainers.FromDockerfile{
