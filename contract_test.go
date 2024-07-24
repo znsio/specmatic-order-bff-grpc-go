@@ -32,7 +32,7 @@ type testEnvironment struct {
 	config                   *config.Config
 }
 
-func TestIntegration(t *testing.T) {
+func TestContract(t *testing.T) {
 	env := setUpEnv(t)
 
 	// setUp (start domain service stub with specmatic-grpc and bff server in container)
@@ -177,9 +177,8 @@ func startKafkaMock(env *testEnvironment) (testcontainers.Container, string, err
 	networkName := env.dockerNetwork.Name
 
 	req := testcontainers.ContainerRequest{
-		Name: "specmatic-kafka",
-		// Image:        "znsio/specmatic-kafka-trial:0.22.5",
-		Image:        "znsio/specmatic-kafka:0.22.7-TRIAL",
+		Name:         "specmatic-kafka",
+		Image:        "znsio/specmatic-kafka-trial:0.22.5",
 		ExposedPorts: []string{port.Port() + "/tcp"},
 		Networks: []string{
 			networkName,
