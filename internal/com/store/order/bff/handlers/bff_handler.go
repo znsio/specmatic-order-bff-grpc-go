@@ -4,7 +4,7 @@ import (
 	"context"
 	"log"
 	"specmatic-order-bff-grpc-go/internal/com/store/order/bff/services"
-	bff_pb "specmatic-order-bff-grpc-go/pkg/api/in/specmatic/examples/store/order_bff_grpc"
+	bff_pb "specmatic-order-bff-grpc-go/pkg/api/io/specmatic/examples/store/grpc"
 
 	"specmatic-order-bff-grpc-go/internal/com/store/order/bff/utils"
 )
