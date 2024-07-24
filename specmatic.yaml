@@ -2,7 +2,7 @@ sources:
   - provider: git
     repository: https://github.com/znsio/specmatic-order-contracts
     test:
-      - in/specmatic/examples/store/order_bff_grpc/bff.proto
+      - io/specmatic/examples/store/grpc/order_bff.proto
     stub:
-      - in/specmatic/examples/store/order_api_grpc/order.proto
-      - in/specmatic/examples/store/order_api_grpc/product.proto
+      - io/specmatic/examples/store/grpc/order_api/order.proto
+      - io/specmatic/examples/store/grpc/order_api/product.proto
