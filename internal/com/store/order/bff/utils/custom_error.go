@@ -13,12 +13,12 @@ type Status struct {
 	Details []interface{} `json:"details,omitempty"`
 }
 
-type CustomError struct {
+type ValidationError struct {
 	Status *Status
 }
 
-func NewCustomError(code codes.Code, message string, details ...interface{}) error {
-	return CustomError{
+func NewValidationError(code codes.Code, message string, details ...interface{}) error {
+	return ValidationError{
 		Status: &Status{
 			Code:    int32(code),
 			Message: message,
@@ -27,15 +27,15 @@ func NewCustomError(code codes.Code, message string, details ...interface{}) err
 	}
 }
 
-func (e CustomError) Error() string {
+func (e ValidationError) Error() string {
 	return e.Status.Message
 }
 
-func (e CustomError) GRPCStatus() *status.Status {
+func (e ValidationError) GRPCStatus() *status.Status {
 	return status.New(codes.Code(e.Status.Code), e.Status.Message)
 }
 
-func (e CustomError) MarshalJSON() ([]byte, error) {
+func (e ValidationError) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		Status        *Status     `json:"status"`
 		Trailers      interface{} `json:"trailers"`

@@ -10,8 +10,8 @@ jobs:
   build:
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
-
+        os: [ubuntu-latest]
+      
     runs-on: ${{matrix.os}}
 
     steps:
@@ -31,39 +31,21 @@ jobs:
         uses: actions/setup-go@v4
         with:
           go-version: '^1.22.5'
-
+      
       - name: Go Tidy
         run: go mod tidy
-
+      
       - name: Install dependencies
         run: |
           go mod download
           go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.28
           go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.2
-
-      - name: setup env
-        run:
-          echo "$GOPATH/bin" >> $GITHUB_PATH
-
-      - name: Set BFF port from config
-        run: |
-          go run scripts/read_port.go >> $GITHUB_ENV
-
-      - name: Build with Makefile
-        run: make all
-
-      - name: Set up Java
-        uses: actions/setup-java@v4
+      
+      - name: Setup Testcontainers Cloud Client
+        uses: atomicjar/testcontainers-cloud-setup-action@v1
         with:
-          distribution: 'temurin' # See 'Supported distributions' for available options
-          java-version: '17'
-      - run: java --version
+          token: ${{ secrets.TC_CLOUD_TOKEN }}
+          wait: true
 
-      - name: Start gRPC Stub
-        run: java --version && java -jar lib/specmatic-grpc-0.0.4-TRIAL-all.jar stub &
-
-      - name: Start Golang gRPC Server
-        run: ./specmatic-order-bff-grpc-go &
-
-      - name: Start gRPC Contract Test
-        run: java -DSPECMATIC_GENERATIVE_TESTS=true -jar lib/specmatic-grpc-0.0.4-TRIAL-all.jar test --port ${{ env.BFF_SERVER_PORT }}
+      - name: start dockerized tests
+        run: go test contract_test.go -v -count=1

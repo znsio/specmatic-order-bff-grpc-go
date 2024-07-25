@@ -53,6 +53,13 @@ func (s *DomainAPIService) FindProducts(ctx context.Context, req *bff_pb.FindAva
 			Inventory: p.Inventory,
 		}
 	}
+
+	// Send Kafka messages
+	err = SendProductMessages(products)
+	if err != nil {
+		return nil, fmt.Errorf("error sending Kafka messages: %w", err)
+	}
+
 	return &bff_pb.ProductListResponse{Products: products}, nil
 }
 
@@ -66,5 +73,6 @@ func (s *DomainAPIService) CreateProduct(ctx context.Context, newProduct *bff_pb
 	if err != nil {
 		return nil, err
 	}
+
 	return &bff_pb.ProductId{Id: productId.Id}, nil
 }
