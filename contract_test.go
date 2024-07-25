@@ -226,6 +226,7 @@ func startBFFService(t *testing.T, env *testEnvironment) (testcontainers.Contain
 			Context:    contextPath,
 			Dockerfile: dockerfilePath,
 		},
+		Hostname: "bff-service",
 		Env: map[string]string{
 			"DOMAIN_SERVER_PORT": env.domainServiceDynamicPort,
 			"DOMAIN_SERVER_HOST": "order-api-mock",
@@ -274,7 +275,7 @@ func runTestContainer(env *testEnvironment) (string, error) {
 		Env: map[string]string{
 			"SPECMATIC_GENERATIVE_TESTS": "true",
 		},
-		Cmd: []string{"test", fmt.Sprintf("--port=%d", bffPortInt), "--host=host.docker.internal"},
+		Cmd: []string{"test", fmt.Sprintf("--port=%d", bffPortInt), "--host=bff-service"},
 		Mounts: testcontainers.Mounts(
 			testcontainers.BindMount(filepath.Join(pwd, "specmatic.yaml"), "/usr/src/app/specmatic.yaml"),
 		),
