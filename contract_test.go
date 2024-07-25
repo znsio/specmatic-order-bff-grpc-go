@@ -137,12 +137,12 @@ func startDomainService(env *testEnvironment) (testcontainers.Container, string,
 		Mounts: testcontainers.Mounts(
 			testcontainers.BindMount(filepath.Join(pwd, "specmatic.yaml"), "/usr/src/app/specmatic.yaml"),
 		),
-		Networks: []string{
-			env.dockerNetwork.Name,
-		},
-		NetworkAliases: map[string][]string{
-			env.dockerNetwork.Name: {"domain-service"},
-		},
+		// Networks: []string{
+		// 	env.dockerNetwork.Name,
+		// },
+		// NetworkAliases: map[string][]string{
+		// 	env.dockerNetwork.Name: {"domain-service"},
+		// },
 		WaitingFor: wait.ForLog("Stub server is running"),
 	}
 
@@ -174,18 +174,16 @@ func startKafkaMock(env *testEnvironment) (testcontainers.Container, string, err
 		return nil, "", fmt.Errorf("invalid port number: %w", err)
 	}
 
-	networkName := env.dockerNetwork.Name
-
 	req := testcontainers.ContainerRequest{
 		Name:         "specmatic-kafka",
 		Image:        "znsio/specmatic-kafka-trial:0.22.5",
 		ExposedPorts: []string{port.Port() + "/tcp"},
-		Networks: []string{
-			networkName,
-		},
-		NetworkAliases: map[string][]string{
-			networkName: {"specmatic-kafka"},
-		},
+		// Networks: []string{
+		// 	networkName,
+		// },
+		// NetworkAliases: map[string][]string{
+		// 	env.dockerNetwork.Name: {"specmatic-kafka"},
+		// },
 		Env: map[string]string{
 			"KAFKA_EXTERNAL_HOST": env.config.KafkaService.Host,
 			"KAFKA_EXTERNAL_PORT": port.Port(),
@@ -234,12 +232,12 @@ func startBFFService(t *testing.T, env *testEnvironment) (testcontainers.Contain
 			"KAFKA_PORT":         env.kafkaServiceDynamicPort,
 			"KAFKA_HOST":         "host.docker.internal",
 		},
-		Networks: []string{
-			env.dockerNetwork.Name,
-		},
-		NetworkAliases: map[string][]string{
-			env.dockerNetwork.Name: {"bff-service"},
-		},
+		// Networks: []string{
+		// 	env.dockerNetwork.Name,
+		// },
+		// NetworkAliases: map[string][]string{
+		// 	env.dockerNetwork.Name: {"bff-service"},
+		// },
 		ExposedPorts: []string{env.config.BFFServer.Port + "/tcp"},
 		WaitingFor:   wait.ForLog("Starting gRPC server"),
 	}
@@ -280,9 +278,9 @@ func runTestContainer(env *testEnvironment) (string, error) {
 		Mounts: testcontainers.Mounts(
 			testcontainers.BindMount(filepath.Join(pwd, "specmatic.yaml"), "/usr/src/app/specmatic.yaml"),
 		),
-		Networks: []string{
-			env.dockerNetwork.Name,
-		},
+		// Networks: []string{
+		// 	env.dockerNetwork.Name,
+		// },
 		WaitingFor: wait.ForLog("Passed Tests:"),
 	}
 
