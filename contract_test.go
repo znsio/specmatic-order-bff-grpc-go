@@ -226,11 +226,10 @@ func startBFFService(t *testing.T, env *testEnvironment) (testcontainers.Contain
 			Context:    contextPath,
 			Dockerfile: dockerfilePath,
 		},
-		Hostname: "bff-service",
 		Env: map[string]string{
-			"DOMAIN_SERVER_PORT": env.domainServiceDynamicPort,
+			"DOMAIN_SERVER_PORT": env.config.Backend.Port,
 			"DOMAIN_SERVER_HOST": "order-api-mock",
-			"KAFKA_PORT":         env.kafkaServiceDynamicPort,
+			"KAFKA_PORT":         env.config.KafkaService.Port,
 			"KAFKA_HOST":         "specmatic-kafka",
 		},
 		Networks: []string{
@@ -265,7 +264,8 @@ func runTestContainer(env *testEnvironment) (string, error) {
 		log.Fatalf("Error getting current directory: %v", err)
 	}
 
-	bffPortInt, err := strconv.Atoi(env.bffServiceDynamicPort)
+	bffPortInt, err := strconv.Atoi(env.config.BFFServer.Port)
+	// bffPortInt, err := strconv.Atoi(env.bffServiceDynamicPort)
 	if err != nil {
 		return "", fmt.Errorf("invalid port number: %w", err)
 	}
