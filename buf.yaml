@@ -4,4 +4,4 @@ deps:
   - buf.build/bufbuild/protovalidate
 build:
   roots:
-    - proto_files
+    - proto_files/io
