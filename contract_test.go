@@ -7,14 +7,16 @@ import (
 	"io"
 	"log"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"specmatic-order-bff-grpc-go/internal/com/store/order/bff/config"
 	"strconv"
 	"testing"
+	"time"
 
 	"github.com/docker/go-connections/nat"
+	"github.com/stretchr/testify/require"
 	"github.com/testcontainers/testcontainers-go"
+	"github.com/testcontainers/testcontainers-go/network"
 	"github.com/testcontainers/testcontainers-go/wait"
 )
 
@@ -22,13 +24,16 @@ type testEnvironment struct {
 	ctx                      context.Context
 	domainServiceContainer   testcontainers.Container
 	domainServiceDynamicPort string
+	kafkaServiceContainer    testcontainers.Container
+	kafkaServiceDynamicPort  string
 	bffServiceContainer      testcontainers.Container
 	bffServiceDynamicPort    string
+	dockerNetwork            *testcontainers.DockerNetwork
 	config                   *config.Config
 }
 
-func TestIntegration(t *testing.T) {
-    env := setUpEnv(t)
+func TestContract(t *testing.T) {
+	env := setUpEnv(t)
 
 	// setUp (start domain service stub with specmatic-grpc and bff server in container)
 	setUp(t, env)
@@ -41,35 +46,51 @@ func TestIntegration(t *testing.T) {
 }
 
 func setUpEnv(t *testing.T) *testEnvironment {
-    config, err := config.LoadConfig("config.yaml")
-    if err != nil {
-        t.Fatalf("Failed to load config: %v", err)
-    }
+	config, err := config.LoadConfig()
+	if err != nil {
+		t.Fatalf("Failed to load config: %v", err)
+	}
 
-    return &testEnvironment{
-        ctx:    context.Background(),
-        config: config,
-    }
+	return &testEnvironment{
+		ctx:    context.Background(),
+		config: config,
+	}
 }
 
 func setUp(t *testing.T, env *testEnvironment) {
 	var err error
 
+	// Create a sub net and store in env.
+	newNetwork, err := network.New(env.ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		require.NoError(t, newNetwork.Remove(env.ctx))
+	})
+	env.dockerNetwork = newNetwork
+
 	printHeader(t, 1, "Starting Domain Service")
 	env.domainServiceContainer, env.domainServiceDynamicPort, err = startDomainService(env)
 	if err != nil {
-	    t.Fatalf("could not start domain service container: %v", err)
+		t.Fatalf("could not start domain service container: %v", err)
 	}
 
-	printHeader(t, 2, "Starting BFF Service")
+	printHeader(t, 2, "Starting Kafka Service")
+	env.kafkaServiceContainer, env.kafkaServiceDynamicPort, err = startKafkaMock(env)
+	if err != nil {
+		t.Fatalf("could not start domain service container: %v", err)
+	}
+
+	printHeader(t, 3, "Starting BFF Service")
 	env.bffServiceContainer, env.bffServiceDynamicPort, err = startBFFService(t, env)
 	if err != nil {
-	    t.Fatalf("could not start bff service container: %v", err)
+		t.Fatalf("could not start bff service container: %v", err)
 	}
 }
 
 func runTests(t *testing.T, env *testEnvironment) {
-	printHeader(t, 3, "Starting tests")
+	printHeader(t, 4, "Starting tests")
 	testLogs, err := runTestContainer(env)
 	if err != nil {
 		t.Fatalf("Could not run test container: %s", err)
@@ -84,6 +105,11 @@ func tearDown(t *testing.T, env *testEnvironment) {
 	if env.bffServiceContainer != nil {
 		if err := env.bffServiceContainer.Terminate(env.ctx); err != nil {
 			t.Logf("Failed to terminate BFF container: %v", err)
+		}
+	}
+	if env.kafkaServiceContainer != nil {
+		if err := env.kafkaServiceContainer.Terminate(env.ctx); err != nil {
+			t.Logf("Failed to terminate Kafka container: %v", err)
 		}
 	}
 	if env.domainServiceContainer != nil {
@@ -111,6 +137,12 @@ func startDomainService(env *testEnvironment) (testcontainers.Container, string,
 		Mounts: testcontainers.Mounts(
 			testcontainers.BindMount(filepath.Join(pwd, "specmatic.yaml"), "/usr/src/app/specmatic.yaml"),
 		),
+		Networks: []string{
+			env.dockerNetwork.Name,
+		},
+		NetworkAliases: map[string][]string{
+			env.dockerNetwork.Name: {"order-api-mock"},
+		},
 		WaitingFor: wait.ForLog("Stub server is running"),
 	}
 
@@ -130,32 +162,85 @@ func startDomainService(env *testEnvironment) (testcontainers.Container, string,
 	return stubContainer, domainServicePort.Port(), nil
 }
 
-func startBFFService(t *testing.T, env *testEnvironment) (testcontainers.Container, string, error) {
-	dockerfilePath := "Dockerfile"
+func startKafkaMock(env *testEnvironment) (testcontainers.Container, string, error) {
+	pwd, err := os.Getwd()
+	if err != nil {
+		return nil, "", fmt.Errorf("Error getting current directory: %v", err)
 
-	bffImageName := "specmatic-order-bff-grpc-go"
-	buildCmd := exec.Command("docker", "build", "-t", bffImageName, "-f", dockerfilePath, ".")
-
-	if err := buildCmd.Run(); err != nil {
-		return nil, "", fmt.Errorf("could not build BFF image: %w", err)
 	}
+
+	port, err := nat.NewPort("tcp", env.config.KafkaService.Port)
+	if err != nil {
+		return nil, "", fmt.Errorf("invalid port number: %w", err)
+	}
+
+	req := testcontainers.ContainerRequest{
+		Name:         "specmatic-kafka",
+		Image:        "znsio/specmatic-kafka-trial:0.22.5",
+		ExposedPorts: []string{port.Port() + "/tcp"},
+		Networks: []string{
+			env.dockerNetwork.Name,
+		},
+		NetworkAliases: map[string][]string{
+			env.dockerNetwork.Name: {"specmatic-kafka"},
+		},
+		Env: map[string]string{
+			"KAFKA_EXTERNAL_HOST": env.config.KafkaService.Host,
+			"KAFKA_EXTERNAL_PORT": port.Port(),
+		},
+		Cmd: []string{"--config=/specmatic.json"}, // TODO: Switch to YAML
+		Mounts: testcontainers.Mounts(
+			testcontainers.BindMount(filepath.Join(pwd, "specmatic.json"), "/specmatic.json"),
+		),
+		WaitingFor: wait.ForLog("Listening on topics: (product-queries)").WithStartupTimeout(2 * time.Minute),
+	}
+
+	kafkaC, err := testcontainers.GenericContainer(env.ctx, testcontainers.GenericContainerRequest{
+		ContainerRequest: req,
+		Started:          true,
+	})
+	if err != nil {
+		fmt.Printf("Error starting Kafka mock container: %v", err)
+	}
+
+	mappedPort, err := kafkaC.MappedPort(env.ctx, port)
+	if err != nil {
+		fmt.Printf("Error getting mapped port for Kafka mock: %v", err)
+	}
+
+	return kafkaC, mappedPort.Port(), nil
+}
+
+func startBFFService(t *testing.T, env *testEnvironment) (testcontainers.Container, string, error) {
 
 	port, err := nat.NewPort("tcp", env.config.BFFServer.Port)
 	if err != nil {
 		return nil, "", fmt.Errorf("invalid port number: %w", err)
 	}
 
+	dockerfilePath := "Dockerfile"
+	contextPath := "."
+
 	req := testcontainers.ContainerRequest{
-		Image: bffImageName,
-		Env: map[string]string{
-			"DOMAIN_SERVER_PORT": env.domainServiceDynamicPort,
-			"DOMAIN_SERVER_HOST": "host.docker.internal",
+		FromDockerfile: testcontainers.FromDockerfile{
+			Context:    contextPath,
+			Dockerfile: dockerfilePath,
 		},
-		ExposedPorts: []string{port.Port() + "/tcp"},
+		Env: map[string]string{
+			"DOMAIN_SERVER_PORT": env.config.Backend.Port,
+			"DOMAIN_SERVER_HOST": "order-api-mock",
+			"KAFKA_PORT":         env.config.KafkaService.Port,
+			"KAFKA_HOST":         "specmatic-kafka",
+		},
+		Networks: []string{
+			env.dockerNetwork.Name,
+		},
+		NetworkAliases: map[string][]string{
+			env.dockerNetwork.Name: {"bff-service"},
+		},
+		ExposedPorts: []string{env.config.BFFServer.Port + "/tcp"},
 		WaitingFor:   wait.ForLog("Starting gRPC server"),
 	}
-
-	t.Log("Container created")
 
 	bffContainer, err := testcontainers.GenericContainer(env.ctx, testcontainers.GenericContainerRequest{
 		ContainerRequest: req,
@@ -179,7 +264,8 @@ func runTestContainer(env *testEnvironment) (string, error) {
 		log.Fatalf("Error getting current directory: %v", err)
 	}
 
-	bffPortInt, err := strconv.Atoi(env.bffServiceDynamicPort)
+	bffPortInt, err := strconv.Atoi(env.config.BFFServer.Port)
+	// bffPortInt, err := strconv.Atoi(env.bffServiceDynamicPort)
 	if err != nil {
 		return "", fmt.Errorf("invalid port number: %w", err)
 	}
@@ -189,10 +275,13 @@ func runTestContainer(env *testEnvironment) (string, error) {
 		Env: map[string]string{
 			"SPECMATIC_GENERATIVE_TESTS": "true",
 		},
-		Cmd: []string{"test", fmt.Sprintf("--port=%d", bffPortInt), "--host=host.docker.internal"},
+		Cmd: []string{"test", fmt.Sprintf("--port=%d", bffPortInt), "--host=bff-service"},
 		Mounts: testcontainers.Mounts(
 			testcontainers.BindMount(filepath.Join(pwd, "specmatic.yaml"), "/usr/src/app/specmatic.yaml"),
 		),
+		Networks: []string{
+			env.dockerNetwork.Name,
+		},
 		WaitingFor: wait.ForLog("Passed Tests:"),
 	}
 
