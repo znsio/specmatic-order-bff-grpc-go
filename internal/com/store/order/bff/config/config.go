@@ -16,9 +16,10 @@ type Config struct {
 		Port string
 	}
 	KafkaService struct {
-		Port  string
-		Host  string
-		Topic string
+		Port    string
+		Host    string
+		Topic   string
+		ApiPort string
 	}
 }
 
@@ -37,13 +38,15 @@ func LoadConfig() (*Config, error) {
 			Port: getEnvOrDefault("SERVER_PORT", "8080"),
 		},
 		KafkaService: struct {
-			Port  string
-			Host  string
-			Topic string
+			Port    string
+			Host    string
+			Topic   string
+			ApiPort string
 		}{
-			Port:  getEnvOrDefault("KAFKA_PORT", "9093"),
-			Host:  getEnvOrDefault("KAFKA_HOST", "specmatic-kafka"),
-			Topic: getEnvOrDefault("KAFKA_TOPIC", "product-queries"),
+			Port:    getEnvOrDefault("KAFKA_PORT", "9093"),
+			Host:    getEnvOrDefault("KAFKA_HOST", "specmatic-kafka"),
+			Topic:   getEnvOrDefault("KAFKA_TOPIC", "product-queries"),
+			ApiPort: getEnvOrDefault("KAFKA_API_PORT", "9094"),
 		},
 	}
 
