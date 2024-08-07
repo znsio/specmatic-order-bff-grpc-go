@@ -189,7 +189,7 @@ func startKafkaMock(env *testEnvironment) (testcontainers.Container, string, err
 			"KAFKA_EXTERNAL_PORT": port.Port(),
 		},
 		Mounts: testcontainers.Mounts(
-			testcontainers.BindMount(filepath.Join(pwd, "specmatic.yaml"), "/specmatic.yaml"),
+			testcontainers.BindMount(filepath.Join(pwd, "specmatic.yaml"), "/usr/src/app/specmatic.yaml"),
 		),
 		WaitingFor: wait.ForLog("Listening on topics: (product-queries)").WithStartupTimeout(2 * time.Minute),
 	}
