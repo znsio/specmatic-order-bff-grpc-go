@@ -1,4 +1,5 @@
 # Binaries and objects
+/kafka-logs/
 /bin/
 /obj/
 *.o
