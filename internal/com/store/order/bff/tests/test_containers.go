@@ -88,9 +88,9 @@ func StartKafkaMock(env *TestEnvironment) (testcontainers.Container, string, err
 			"KAFKA_EXTERNAL_HOST": env.Config.KafkaService.Host,
 			"KAFKA_EXTERNAL_PORT": env.Config.KafkaService.Port,
 		},
-		Cmd: []string{"--config=/specmatic.json", "--mock-server-api-port=" + env.Config.KafkaService.ApiPort},
+		Cmd: []string{"virtualize", "--mock-server-api-port=" + env.Config.KafkaService.ApiPort},
 		Mounts: testcontainers.Mounts(
-			testcontainers.BindMount(filepath.Join(pwd, "specmatic.json"), "/usr/src/app/specmatic.json"),
+			testcontainers.BindMount(filepath.Join(pwd, "specmatic.yaml"), "/usr/src/app/specmatic.yaml"),
 		),
 		WaitingFor: wait.ForLog("Listening on topics: (product-queries)").WithStartupTimeout(2 * time.Minute),
 	}
