@@ -176,7 +176,7 @@ func startKafkaMock(env *testEnvironment) (testcontainers.Container, string, err
 
 	req := testcontainers.ContainerRequest{
 		Name:         "specmatic-kafka",
-		Image:        "znsio/specmatic-kafka-trial:0.22.5",
+		Image:        "znsio/specmatic-kafka-trial:0.22.9",
 		ExposedPorts: []string{port.Port() + "/tcp"},
 		Networks: []string{
 			env.dockerNetwork.Name,
@@ -188,9 +188,8 @@ func startKafkaMock(env *testEnvironment) (testcontainers.Container, string, err
 			"KAFKA_EXTERNAL_HOST": env.config.KafkaService.Host,
 			"KAFKA_EXTERNAL_PORT": port.Port(),
 		},
-		Cmd: []string{"--config=/specmatic.json"}, // TODO: Switch to YAML
 		Mounts: testcontainers.Mounts(
-			testcontainers.BindMount(filepath.Join(pwd, "specmatic.json"), "/specmatic.json"),
+			testcontainers.BindMount(filepath.Join(pwd, "specmatic.yaml"), "/specmatic.yaml"),
 		),
 		WaitingFor: wait.ForLog("Listening on topics: (product-queries)").WithStartupTimeout(2 * time.Minute),
 	}
