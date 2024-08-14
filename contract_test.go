@@ -30,8 +30,9 @@ func setUpEnv(t *testing.T) *tests.TestEnvironment {
 	}
 
 	return &tests.TestEnvironment{
-		Ctx:    context.Background(),
-		Config: config,
+		Ctx:                  context.Background(),
+		Config:               config,
+		ExpectedMessageCount: 5,
 	}
 }
 
@@ -86,6 +87,11 @@ func tearDown(t *testing.T, env *tests.TestEnvironment) {
 		}
 	}
 	if env.KafkaServiceContainer != nil {
+		err := tests.VerifyKafkaExpectations(env)
+		if err != nil {
+			t.Logf("Kafka expectations were not met: %s", err)
+			t.Fail()
+		}
 		if err := env.KafkaServiceContainer.Terminate(env.Ctx); err != nil {
 			t.Logf("Failed to terminate Kafka container: %v", err)
 		}

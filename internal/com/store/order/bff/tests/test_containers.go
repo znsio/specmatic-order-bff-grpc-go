@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -14,6 +16,7 @@ import (
 	"github.com/docker/go-connections/nat"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
+	"github.com/tidwall/gjson"
 )
 
 func StartDomainService(env *TestEnvironment) (testcontainers.Container, string, error) {
@@ -71,9 +74,6 @@ func StartKafkaMock(env *TestEnvironment) (testcontainers.Container, string, err
 		return nil, "", fmt.Errorf("invalid port number: %w", err)
 	}
 
-	fmt.Println("EXposing ports at =====> : ", port.Port())
-	fmt.Println("API port at : ", env.Config.KafkaService.ApiPort)
-
 	req := testcontainers.ContainerRequest{
 		Name:         "specmatic-kafka",
 		Image:        "znsio/specmatic-kafka-trial",
@@ -108,7 +108,23 @@ func StartKafkaMock(env *TestEnvironment) (testcontainers.Container, string, err
 		fmt.Printf("Error getting mapped port for Kafka mock: %v", err)
 	}
 
-	fmt.Println("Mapped ports at =====> : ", mappedPort.Port())
+	mappedApiPort, err := kafkaC.MappedPort(env.Ctx, nat.Port(env.Config.KafkaService.ApiPort))
+	if err != nil {
+		fmt.Printf("Error getting API server port: %v", err)
+	} else {
+		env.KafkaDynamicAPIPort = mappedApiPort.Port()
+	}
+
+	// Get the host IP
+	kafkaAPIHost, err := kafkaC.Host(env.Ctx)
+	if err != nil {
+		return nil, "", fmt.Errorf("Error getting host IP: %v", err)
+	}
+	env.KafkaAPIHost = kafkaAPIHost
+
+	if err := SetKafkaExpectations(env); err != nil {
+		fmt.Printf("failed to set Kafka expectations ==== : %v", err)
+	}
 
 	return kafkaC, mappedPort.Port(), nil
 }
@@ -210,4 +226,60 @@ func RunTestContainer(env *TestEnvironment) (string, error) {
 	}
 
 	return buf.String(), nil
+}
+
+func SetKafkaExpectations(env *TestEnvironment) error {
+	endpoint := "/_expectations"
+	url := fmt.Sprintf("http://%s:%s%s", env.KafkaAPIHost, env.KafkaDynamicAPIPort, endpoint)
+
+	postBody := []byte(fmt.Sprintf(`[{"topic": "product-queries", "count": %d}]`, env.ExpectedMessageCount))
+
+	resp, err := http.Post(url, "application/json", bytes.NewBuffer(postBody))
+	if err != nil {
+		fmt.Println("Error making request:", err)
+		return nil
+	}
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Println("Error reading response:", err)
+		return nil
+	}
+
+	fmt.Println(string(body))
+	return nil
+}
+
+func VerifyKafkaExpectations(env *TestEnvironment) error {
+	verificationUrl := fmt.Sprintf("http://%s:%s/%s", env.KafkaAPIHost, env.KafkaDynamicAPIPort, "_expectations/verifications")
+
+	resp, err := http.Post(verificationUrl, "application/json", nil)
+	if err != nil {
+		fmt.Println("Error making request:", err)
+		return nil
+	}
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Println("Error reading response:", err)
+		return nil
+	}
+
+	result := gjson.ParseBytes(body)
+
+	success := result.Get("success").Bool()
+	errors := result.Get("errors").Array()
+
+	if !success {
+		errorMessages := make([]string, len(errors))
+		for i, err := range errors {
+			errorMessages[i] = err.String()
+		}
+		return fmt.Errorf("%v", errorMessages)
+	}
+
+	fmt.Println("Kafka mock expectations were met successfully.")
+	return nil
 }

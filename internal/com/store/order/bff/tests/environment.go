@@ -14,6 +14,8 @@ type TestEnvironment struct {
 	KafkaServiceContainer    testcontainers.Container
 	KafkaServiceDynamicPort  string
 	KafkaDynamicAPIPort      string
+	KafkaAPIHost             string
+	ExpectedMessageCount     int
 	BffServiceContainer      testcontainers.Container
 	BffServiceDynamicPort    string
 	DockerNetwork            *testcontainers.DockerNetwork

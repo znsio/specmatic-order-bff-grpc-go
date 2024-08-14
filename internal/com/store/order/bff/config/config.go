@@ -3,7 +3,6 @@
 package config
 
 import (
-	"fmt"
 	"os"
 )
 
@@ -55,9 +54,7 @@ func LoadConfig() (*Config, error) {
 
 func getEnvOrDefault(key, defaultValue string) string {
 	if value, exists := os.LookupEnv(key); exists {
-		fmt.Printf("%s received via env var: %s\n", key, value)
 		return value
 	}
-	fmt.Printf("%s using default value: %s\n", key, defaultValue)
 	return defaultValue
 }
