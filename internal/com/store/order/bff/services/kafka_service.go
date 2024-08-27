@@ -34,9 +34,10 @@ func SendProductMessages(products []*bff_pb.Product) error {
 	})
 	defer w.Close()
 
-	for _, product := range products {
-		if err := sendSingleProduct(w, *product); err != nil {
-			log.Printf("Error sending product (ID: %d): %v", product.Id, err)
+	if len(products) > 0 {
+		firstProduct := products[0]
+		if err := sendSingleProduct(w, *firstProduct); err != nil {
+			log.Printf("Error sending product (ID: %d): %v", firstProduct.Id, err)
 			return err
 		}
 	}
