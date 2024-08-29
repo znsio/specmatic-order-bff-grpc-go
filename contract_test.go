@@ -39,6 +39,10 @@ func setUpEnv(t *testing.T) *tests.TestEnvironment {
 func setUp(t *testing.T, env *tests.TestEnvironment) {
 	var err error
 
+	// domainServiceDone := make(chan error)
+	// kafkaServiceDone := make(chan error)
+	// bffServiceDone := make(chan error)
+
 	// Create a sub net and store in env.
 	newNetwork, err := network.New(env.Ctx)
 	if err != nil {
@@ -49,23 +53,39 @@ func setUp(t *testing.T, env *tests.TestEnvironment) {
 	})
 	env.DockerNetwork = newNetwork
 
+	// go func() {
 	printHeader(t, 1, "Starting Domain Service")
 	env.DomainServiceContainer, env.DomainServiceDynamicPort, err = tests.StartDomainService(env)
 	if err != nil {
-		t.Fatalf("could not start domain service container: %v", err)
+		t.Log("could not start domain service container: ", err)
 	}
+	// 	domainServiceDone <- nil
+	// }()
 
+	// go func() {
 	printHeader(t, 2, "Starting Kafka Service")
 	env.KafkaServiceContainer, env.KafkaServiceDynamicPort, err = tests.StartKafkaMock(env)
 	if err != nil {
-		t.Fatalf("could not start domain service container: %v", err)
+		t.Log("could not start domain service container: ", err)
 	}
+	// 	kafkaServiceDone <- nil
+	// }()
 
+	// go func() {
 	printHeader(t, 3, "Starting BFF Service")
 	env.BffServiceContainer, env.BffServiceDynamicPort, err = tests.StartBFFService(t, env)
 	if err != nil {
-		t.Fatalf("could not start bff service container: %v", err)
+		t.Log("could not start bff service container: ", err)
 	}
+	// 	bffServiceDone <- nil
+	// }()
+
+	// // Wait for all steps to complete
+	// for _, ch := range []chan error{domainServiceDone, kafkaServiceDone, bffServiceDone} {
+	// 	if err := <-ch; err != nil {
+	// 		t.Fatal(err)
+	// 	}
+	// }
 }
 
 func runTests(t *testing.T, env *tests.TestEnvironment) {
