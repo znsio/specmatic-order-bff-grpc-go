@@ -18,6 +18,8 @@ import (
 	"github.com/tidwall/gjson"
 )
 
+var specmaticGrpcImage = "znsio/specmatic-grpc-trial:0.0.7"
+
 func StartDomainService(env *TestEnvironment) (testcontainers.Container, string, error) {
 	pwd, err := os.Getwd()
 	if err != nil {
@@ -30,7 +32,7 @@ func StartDomainService(env *TestEnvironment) (testcontainers.Container, string,
 	}
 
 	req := testcontainers.ContainerRequest{
-		Image:        "znsio/specmatic-grpc-trial",
+		Image:        specmaticGrpcImage,
 		ExposedPorts: []string{port.Port() + "/tcp"},
 		Cmd:          []string{"stub"},
 		Mounts: testcontainers.Mounts(
@@ -188,7 +190,7 @@ func RunTestContainer(env *TestEnvironment) (string, error) {
 	}
 
 	req := testcontainers.ContainerRequest{
-		Image: "znsio/specmatic-grpc-trial",
+		Image: specmaticGrpcImage,
 		Env: map[string]string{
 			"SPECMATIC_GENERATIVE_TESTS": "true",
 		},
