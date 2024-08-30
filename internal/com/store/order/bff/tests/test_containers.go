@@ -42,7 +42,7 @@ func StartDomainService(env *TestEnvironment) (testcontainers.Container, string,
 			env.DockerNetwork.Name,
 		},
 		NetworkAliases: map[string][]string{
-			env.DockerNetwork.Name: {"order-api-mock"},
+			env.DockerNetwork.Name: {env.Config.Backend.Host},
 		},
 		WaitingFor: wait.ForLog("Stub server is running"),
 	}
@@ -83,7 +83,7 @@ func StartKafkaMock(env *TestEnvironment) (testcontainers.Container, string, err
 			env.DockerNetwork.Name,
 		},
 		NetworkAliases: map[string][]string{
-			env.DockerNetwork.Name: {"specmatic-kafka"},
+			env.DockerNetwork.Name: {env.Config.KafkaService.Host},
 		},
 		Env: map[string]string{
 			"KAFKA_EXTERNAL_HOST": env.Config.KafkaService.Host,
@@ -147,15 +147,15 @@ func StartBFFService(t *testing.T, env *TestEnvironment) (testcontainers.Contain
 		},
 		Env: map[string]string{
 			"DOMAIN_SERVER_PORT": env.Config.Backend.Port,
-			"DOMAIN_SERVER_HOST": "order-api-mock",
+			"DOMAIN_SERVER_HOST": env.Config.Backend.Host,
 			"KAFKA_PORT":         env.Config.KafkaService.Port,
-			"KAFKA_HOST":         "specmatic-kafka",
+			"KAFKA_HOST":         env.Config.KafkaService.Host,
 		},
 		Networks: []string{
 			env.DockerNetwork.Name,
 		},
 		NetworkAliases: map[string][]string{
-			env.DockerNetwork.Name: {"bff-service"},
+			env.DockerNetwork.Name: {env.Config.BFFServer.Host},
 		},
 		ExposedPorts: []string{env.Config.BFFServer.Port + "/tcp"},
 		WaitingFor:   wait.ForLog("Starting gRPC server"),
@@ -184,7 +184,6 @@ func RunTestContainer(env *TestEnvironment) (string, error) {
 	}
 
 	bffPortInt, err := strconv.Atoi(env.Config.BFFServer.Port)
-	// bffPortInt, err := strconv.Atoi(env.bffServiceDynamicPort)
 	if err != nil {
 		return "", fmt.Errorf("invalid port number: %w", err)
 	}
@@ -194,7 +193,7 @@ func RunTestContainer(env *TestEnvironment) (string, error) {
 		Env: map[string]string{
 			"SPECMATIC_GENERATIVE_TESTS": "true",
 		},
-		Cmd: []string{"test", fmt.Sprintf("--port=%d", bffPortInt), "--host=bff-service"},
+		Cmd: []string{"test", fmt.Sprintf("--port=%d", bffPortInt), "--host=" + env.Config.BFFServer.Host},
 		Mounts: testcontainers.Mounts(
 			testcontainers.BindMount(filepath.Join(pwd, "specmatic.yaml"), "/usr/src/app/specmatic.yaml"),
 		),
