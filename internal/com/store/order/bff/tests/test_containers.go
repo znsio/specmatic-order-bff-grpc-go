@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/docker/docker/api/types/container"
 	"github.com/docker/go-connections/nat"
 	"github.com/go-resty/resty/v2"
 	"github.com/testcontainers/testcontainers-go"
@@ -75,6 +76,16 @@ func StartKafkaMock(env *TestEnvironment) (testcontainers.Container, string, err
 		return nil, "", fmt.Errorf("invalid port number: %w", err)
 	}
 
+	bindPorts := func(hostConfig *container.HostConfig) {
+		hostConfig.PortBindings = nat.PortMap{
+			port: {
+				{
+					HostPort: env.Config.KafkaService.Port,
+				},
+			},
+		}
+	}
+
 	req := testcontainers.ContainerRequest{
 		Name:         "specmatic-kafka",
 		Image:        "znsio/specmatic-kafka-trial",
@@ -86,14 +97,15 @@ func StartKafkaMock(env *TestEnvironment) (testcontainers.Container, string, err
 			env.DockerNetwork.Name: {env.Config.KafkaService.Host},
 		},
 		Env: map[string]string{
-			"KAFKA_EXTERNAL_HOST": env.Config.KafkaService.Host,
-			"KAFKA_EXTERNAL_PORT": env.Config.KafkaService.Port,
+			"SPECMATIC_KAFKA_HOST": env.Config.KafkaService.Host,
+			"SPECMATIC_KAFKA_PORT": env.Config.KafkaService.Port,
 		},
 		Cmd: []string{"virtualize", "--mock-server-api-port=" + env.Config.KafkaService.ApiPort},
 		Mounts: testcontainers.Mounts(
 			testcontainers.BindMount(filepath.Join(pwd, "specmatic.yaml"), "/usr/src/app/specmatic.yaml"),
 		),
-		WaitingFor: wait.ForLog("Listening on topics: (product-queries)").WithStartupTimeout(2 * time.Minute),
+		HostConfigModifier: bindPorts,
+		WaitingFor:         wait.ForLog("Listening on topics: (product-queries)").WithStartupTimeout(2 * time.Minute),
 	}
 
 	kafkaC, err := testcontainers.GenericContainer(env.Ctx, testcontainers.GenericContainerRequest{

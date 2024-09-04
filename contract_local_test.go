@@ -1,8 +1,9 @@
 package main_test
 
 import (
-	"bytes"
+	"bufio"
 	"context"
+	"fmt"
 	"os"
 	"os/exec"
 	"specmatic-order-bff-grpc-go/internal/com/store/order/bff/config"
@@ -17,6 +18,14 @@ import (
 
 var bffServiceCmd *exec.Cmd
 
+/*
+Runs the following services :
+
+* The Domain service (specmatic-grpc) virtualizing based on proto files - on TestContainers
+* Kafka mock, (specmatic-kafka), to listen on product-queries - on TestContainers
+* This BFF, system under test - locally on host machine.
+* The Test service (specmatic-grpc), to run comprehensive generative tests based on proto files - on TestControllers
+*/
 func TestContractLocal(t *testing.T) {
 	env := setUpEnviron(t)
 
@@ -63,6 +72,7 @@ func setUpServices(t *testing.T, env *tests.TestEnvironment) {
 	}
 
 	printHeaderr(t, 2, "Starting Kafka Service")
+	env.Config.KafkaService.Host = "localhost"
 	env.KafkaServiceContainer, env.KafkaServiceDynamicPort, err = tests.StartKafkaMock(env)
 	if err != nil {
 		t.Fatalf("could not start domain service container: %v", err)
@@ -70,52 +80,52 @@ func setUpServices(t *testing.T, env *tests.TestEnvironment) {
 
 	printHeaderr(t, 3, "Starting BFF Service")
 	bffServiceCmd, env.BffServiceDynamicPort, err = startBFFService(env, t)
+	env.Config.BFFServer.Host = "host.docker.internal"
 	if err != nil {
 		t.Fatalf("could not start bff service container: %v", err)
 	}
+
 }
 
 func startBFFService(env *tests.TestEnvironment, t *testing.T) (*exec.Cmd, string, error) {
 	cmd := exec.Command("go", "run", "./cmd/main.go")
-	cmd.Env = os.Environ()
-
-	// Set environment variables
 	cmd.Env = append(os.Environ(),
 		"DOMAIN_SERVER_PORT="+env.DomainServiceDynamicPort,
 		"DOMAIN_SERVER_HOST=localhost",
 		"KAFKA_PORT="+env.KafkaServiceDynamicPort,
 		"KAFKA_HOST=localhost",
-		// Add any other environment variables your app needs
 	)
 
-	// Buffer to store the command output
-	var outputBuf bytes.Buffer
-	cmd.Stdout = &outputBuf
-	cmd.Stderr = &outputBuf
+	stdout, _ := cmd.StdoutPipe()
+	cmd.Stderr = cmd.Stdout
 
-	// Start the application
 	if err := cmd.Start(); err != nil {
 		return nil, "", err
 	}
 
-	// Start a goroutine to read the application's output
+	serverReady := make(chan bool)
 	go func() {
-		for {
-			line, err := outputBuf.ReadString('\n')
-			if err != nil {
-				time.Sleep(100 * time.Millisecond)
-				continue
+		scanner := bufio.NewScanner(stdout)
+		for scanner.Scan() {
+			line := scanner.Text()
+			t.Log("BFF output:", line)
+			if strings.Contains(line, "Starting gRPC server on 8080") {
+				serverReady <- true
+				return
 			}
-			t.Log("BFF output:", strings.TrimSpace(line))
-
 		}
+		serverReady <- false
 	}()
 
-	env.Config.BFFServer.Host = "host.docker.internal"
-
-	time.Sleep(2 * time.Second)
-
-	return cmd, env.Config.BFFServer.Port, nil
+	select {
+	case success := <-serverReady:
+		if success {
+			return cmd, env.Config.BFFServer.Port, nil
+		}
+		return nil, "", fmt.Errorf("BFF server failed to start")
+	case <-time.After(30 * time.Second):
+		return nil, "", fmt.Errorf("timeout waiting for BFF server to start")
+	}
 }
 
 func runContractTest(t *testing.T, env *tests.TestEnvironment) {
