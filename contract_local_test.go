@@ -135,7 +135,7 @@ func runContractTest(t *testing.T, env *tests.TestEnvironment) {
 		t.Fatalf("Could not run test container: %s", err)
 	}
 
-	// Print test outcomes
+	// Print test outcomes, test
 	t.Log("Test Results:")
 	t.Log(testLogs)
 }
